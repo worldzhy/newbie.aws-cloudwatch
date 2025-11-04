@@ -1,0 +1,8 @@
+{
+  "config-service": {
+    "cloudwatch": {}
+  },
+  "env": {},
+  "dependencies": {},
+  "devDependencies": {}
+}
