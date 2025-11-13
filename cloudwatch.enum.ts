@@ -26,3 +26,15 @@ export enum CloudwatchMetricUnit {
   PERCENT = 'Percent',
   BYTES = 'Bytes',
 }
+
+export enum CloudwatchMetricRDSMetricName {
+  CPU_UTILIZATION = 'CPUUtilization',
+  FREEABLE_MEMORY = 'FreeableMemory',
+  FREE_STORAGE_SPACE = 'FreeStorageSpace',
+  DATABASE_CONNECTIONS = 'DatabaseConnections',
+  DISK_INODES_USED = 'disk_inodes_used',
+  READ_IOPS = 'ReadIOPS',
+  WRITE_IOPS = 'WriteIOPS',
+  READ_LATENCY = 'ReadLatency',
+  WRITE_LATENCY = 'WriteLatency',
+}

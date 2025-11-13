@@ -3,6 +3,7 @@ import {CloudWatchClient, GetMetricStatisticsCommand} from '@aws-sdk/client-clou
 import {
   CloudwatchMetricDiskMetricName,
   CloudwatchMetricMemoryMetricName,
+  CloudwatchMetricRDSMetricName,
   CloudwatchMetricStatistics,
   CloudwatchMetricUnit,
 } from '@microservices/cloudwatch/cloudwatch.enum';
@@ -120,6 +121,40 @@ export class CloudwatchService {
       Dimensions: [
         {
           Name: 'InstanceId',
+          Value: instanceId,
+        },
+      ],
+      StartTime: startTime,
+      EndTime: endTime,
+      Period: period,
+      Statistics: [statistics],
+    });
+    return await client.send(command);
+  }
+
+  async getRDSMetric(args: {
+    awsKey?: string;
+    awsSecret?: string;
+    metricName: CloudwatchMetricRDSMetricName;
+    region: string;
+    instanceId: string;
+    startTime: Date;
+    endTime: Date;
+    period: number;
+    statistics: CloudwatchMetricStatistics;
+  }) {
+    const {awsKey, awsSecret, metricName, region, instanceId, startTime, endTime, period, statistics} = args;
+    const client = this.initClient({
+      awsKey,
+      awsSecret,
+      region,
+    });
+    const command = new GetMetricStatisticsCommand({
+      Namespace: 'AWS/RDS',
+      MetricName: metricName,
+      Dimensions: [
+        {
+          Name: 'DBInstanceIdentifier',
           Value: instanceId,
         },
       ],
