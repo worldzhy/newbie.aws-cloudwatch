@@ -2,8 +2,6 @@ export enum CloudwatchMetricStatistics {
   AVERAGE = 'Average',
   MINIMUM = 'Minimum',
   MAXIMUM = 'Maximum',
-  SUM = 'Sum',
-  SAMPLE_COUNT = 'SampleCount',
 }
 
 export enum CloudwatchMetricMemoryMetricName {
@@ -29,12 +27,5 @@ export enum CloudwatchMetricUnit {
 
 export enum CloudwatchMetricRDSMetricName {
   CPU_UTILIZATION = 'CPUUtilization',
-  FREEABLE_MEMORY = 'FreeableMemory',
-  FREE_STORAGE_SPACE = 'FreeStorageSpace',
   DATABASE_CONNECTIONS = 'DatabaseConnections',
-  DISK_INODES_USED = 'disk_inodes_used',
-  READ_IOPS = 'ReadIOPS',
-  WRITE_IOPS = 'WriteIOPS',
-  READ_LATENCY = 'ReadLatency',
-  WRITE_LATENCY = 'WriteLatency',
 }
