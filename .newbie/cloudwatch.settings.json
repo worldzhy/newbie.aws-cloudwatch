@@ -4,7 +4,9 @@
   },
   "env": {},
   "dependencies": {
-    "@aws-sdk/client-cloudwatch": "^3.922.0"
+    "@aws-sdk/client-cloudwatch": "^3.922.0",
+    "@aws-sdk/client-ec2": "^3.940.0",
+    "@aws-sdk/client-rds": "^3.940.0"
   },
   "devDependencies": {}
 }

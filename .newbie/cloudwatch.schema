@@ -1,0 +1,56 @@
+// !! ------------------------------------------------------------ //
+// !!            [Microservice] AWS CloudWatch models              //
+// !! ------------------------------------------------------------ //
+// * AwsAccount                                                    //
+// * Ec2Instance                                                   //
+// * RdsInstance                                                   //
+// * ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ //
+
+model AwsAccount {
+  id              String        @id
+  iamUserName     String
+  accessKeyId     String        @unique
+  secretAccessKey String // 加密存储
+  regions         AwsRegion[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  ec2Instances    Ec2Instance[]
+  rdsInstances    RdsInstance[]
+
+  @@schema("microservice/cloudwatch")
+}
+
+model Ec2Instance {
+  id           String     @id
+  name         String
+  status       String?
+  region       AwsRegion
+  isWatching   Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  awsAccount   AwsAccount @relation(fields: [awsAccountId], references: [id])
+  awsAccountId String     @db.Uuid
+
+  @@schema("microservice/cloudwatch")
+}
+
+model RdsInstance {
+  id           String     @id
+  name         String
+  status       String?
+  region       AwsRegion
+  isWatching   Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  awsAccount   AwsAccount @relation(fields: [awsAccountId], references: [id])
+  awsAccountId String     @db.Uuid
+
+  @@schema("microservice/cloudwatch")
+}
+
+enum AwsRegion {
+  us_east_1
+  us_east_2
+
+  @@schema("microservice/cloudwatch")
+}
