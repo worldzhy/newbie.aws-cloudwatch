@@ -1,63 +1,27 @@
 import {Injectable} from '@nestjs/common';
 import {CloudWatchClient, GetMetricDataCommand} from '@aws-sdk/client-cloudwatch';
 import {CloudwatchMetricRDSMetricName, CloudwatchMetricStatistics} from '@microservices/cloudwatch/cloudwatch.enum';
-import {DescribeInstancesCommand, EC2Client} from '@aws-sdk/client-ec2';
-import {DescribeDBInstancesCommand, RDSClient} from '@aws-sdk/client-rds';
-import {isArray} from 'class-validator';
+import {ConfigService} from '@nestjs/config';
+
+const CryptoJS = require('crypto-js');
 
 @Injectable()
 export class CloudwatchService {
-  private initCloudwatchClient(args: {awsKey?: string; awsSecret?: string; region: string}) {
-    const {awsKey, awsSecret, region} = args;
+  constructor(private readonly configService: ConfigService) {}
+
+  private initCloudwatchClient(args: {accessKeyId?: string; secretAccessKey?: string; region: string}) {
+    const {accessKeyId, secretAccessKey, region} = args;
     let client: CloudWatchClient;
-    if (awsKey && awsSecret) {
+    if (accessKeyId && secretAccessKey) {
       client = new CloudWatchClient({
         region,
         credentials: {
-          accessKeyId: awsKey,
-          secretAccessKey: awsSecret,
+          accessKeyId,
+          secretAccessKey,
         },
       });
     } else {
       client = new CloudWatchClient({
-        region,
-      });
-    }
-    return client;
-  }
-
-  private initEC2Client(args: {awsKey?: string; awsSecret?: string; region: string}) {
-    const {awsKey, awsSecret, region} = args;
-    let client: EC2Client;
-    if (awsKey && awsSecret) {
-      client = new EC2Client({
-        region,
-        credentials: {
-          accessKeyId: awsKey,
-          secretAccessKey: awsSecret,
-        },
-      });
-    } else {
-      client = new EC2Client({
-        region,
-      });
-    }
-    return client;
-  }
-
-  private initRDSClient(args: {awsKey?: string; awsSecret?: string; region: string}) {
-    const {awsKey, awsSecret, region} = args;
-    let client: RDSClient;
-    if (awsKey && awsSecret) {
-      client = new RDSClient({
-        region,
-        credentials: {
-          accessKeyId: awsKey,
-          secretAccessKey: awsSecret,
-        },
-      });
-    } else {
-      client = new RDSClient({
         region,
       });
     }
@@ -65,49 +29,23 @@ export class CloudwatchService {
   }
 
   async getEC2InstancesCPUMetric(args: {
-    ec2InstanceIds?: string[];
-    awsKey?: string;
-    awsSecret?: string;
+    ec2InstanceRemoteIds: string[];
     region: string;
     startTime: Date;
     endTime: Date;
     period: number;
     statistics: CloudwatchMetricStatistics;
+    accessKeyId?: string;
+    secretAccessKey?: string;
   }) {
-    const {ec2InstanceIds, awsKey, awsSecret, region, startTime, endTime, period, statistics} = args;
-    const ec2Client = this.initEC2Client({
-      awsKey,
-      awsSecret,
-      region,
-    });
+    const {ec2InstanceRemoteIds, accessKeyId, secretAccessKey, region, startTime, endTime, period, statistics} = args;
     const cloudwatchClient = this.initCloudwatchClient({
-      awsKey,
-      awsSecret,
+      accessKeyId,
+      secretAccessKey,
       region,
     });
-    let ids: string[] = [];
-    if (!isArray(ec2InstanceIds) || ec2InstanceIds.length === 0) {
-      // List all ec2 instances.
-      const listCommand = new DescribeInstancesCommand({
-        MaxResults: 1000,
-      });
-      const ec2Response = await ec2Client.send(listCommand);
-      if (ec2Response.Reservations) {
-        for (const reservation of ec2Response.Reservations) {
-          if (reservation.Instances) {
-            for (const inst of reservation.Instances) {
-              if (inst.InstanceId) {
-                ids.push(inst.InstanceId);
-              }
-            }
-          }
-        }
-      }
-    } else {
-      ids = [...ec2InstanceIds];
-    }
-    if (ids.length) {
-      const queries = ids.map((id, idx) => ({
+    if (ec2InstanceRemoteIds.length) {
+      const queries = ec2InstanceRemoteIds.map((id, idx) => ({
         Id: `cpu${idx}`,
         MetricStat: {
           Metric: {
@@ -136,9 +74,7 @@ export class CloudwatchService {
   }
 
   async getRDSInstancesMetric(args: {
-    rdsInstanceIds?: string[];
-    awsKey?: string;
-    awsSecret?: string;
+    rdsInstanceRemoteIds: string[];
     metricName: CloudwatchMetricRDSMetricName;
     region: string;
     instanceId: string;
@@ -146,53 +82,50 @@ export class CloudwatchService {
     endTime: Date;
     period: number;
     statistics: CloudwatchMetricStatistics;
+    accessKeyId?: string;
+    secretAccessKey?: string;
   }) {
-    const {rdsInstanceIds, awsKey, awsSecret, metricName, region, instanceId, startTime, endTime, period, statistics} =
-      args;
-    const rdsClient = this.initEC2Client({
-      awsKey,
-      awsSecret,
+    const {
+      rdsInstanceRemoteIds,
+      accessKeyId,
+      secretAccessKey,
+      metricName,
       region,
-    });
+      startTime,
+      endTime,
+      period,
+      statistics,
+    } = args;
     const cloudwatchClient = this.initCloudwatchClient({
-      awsKey,
-      awsSecret,
+      accessKeyId,
+      secretAccessKey,
       region,
     });
-    let ids: string[] = [];
-    if (!isArray(rdsInstanceIds) || rdsInstanceIds.length === 0) {
-      // List all rds instances.
-      const listCommand = new DescribeDBInstancesCommand({
-        MaxRecords: 100,
-      });
-      const rdsResponse = await rdsClient.send(listCommand);
-      if (rdsResponse.DBInstances) {
-        for (const inst of rdsResponse.DBInstances) {
-          if (inst.DBInstanceIdentifier) {
-            ids.push(inst.DBInstanceIdentifier);
-          }
-        }
-      }
-    } else {
-      ids = [...rdsInstanceIds];
-    }
-    const queries = ids.map((id, index) => ({
-      Id: `q${index}`, // 每个查询要有唯一 Id
-      MetricStat: {
-        Metric: {
-          Namespace: 'AWS/RDS',
-          MetricName: metricName,
-          Dimensions: [{Name: 'DBInstanceIdentifier', Value: id}],
+    if (rdsInstanceRemoteIds.length) {
+      const queries = rdsInstanceRemoteIds.map((id, index) => ({
+        Id: `q${index}`,
+        MetricStat: {
+          Metric: {
+            Namespace: 'AWS/RDS',
+            MetricName: metricName,
+            Dimensions: [{Name: 'DBInstanceIdentifier', Value: id}],
+          },
+          Period: period,
+          Stat: statistics,
         },
-        Period: period,
-        Stat: statistics,
-      },
-    }));
-    const command = new GetMetricDataCommand({
-      StartTime: startTime,
-      EndTime: endTime,
-      MetricDataQueries: queries,
-    });
-    return await cloudwatchClient.send(command);
+      }));
+      const command = new GetMetricDataCommand({
+        StartTime: startTime,
+        EndTime: endTime,
+        MetricDataQueries: queries,
+      });
+      return await cloudwatchClient.send(command);
+    }
+    return null;
+  }
+
+  encryptSecretAccessKey(secretAccessKey: string) {
+    const encryptKey = this.configService.get('microservices.cloudwatch.encryptKey') as string;
+    return CryptoJS.AES.encrypt(secretAccessKey, encryptKey).toString();
   }
 }

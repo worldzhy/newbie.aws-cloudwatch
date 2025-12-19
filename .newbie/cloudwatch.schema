@@ -7,48 +7,55 @@
 // * ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ //
 
 model AwsAccount {
-  id              String        @id
+  id              String        @id @default(uuid()) @db.Uuid
   iamUserName     String
   accessKeyId     String        @unique
-  secretAccessKey String // 加密存储
-  regions         AwsRegion[]
+  secretAccessKey String
+  regions         AWSRegion[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   ec2Instances    Ec2Instance[]
   rdsInstances    RdsInstance[]
 
+  @@map("AWSAccount")
   @@schema("microservice/cloudwatch")
 }
 
 model Ec2Instance {
-  id           String     @id
+  id           String     @id @default(uuid()) @db.Uuid
   name         String
-  status       String?
-  region       AwsRegion
+  status       String
+  region       AWSRegion
+  remoteId     String
   isWatching   Boolean    @default(false)
+  awsAccountId String     @db.Uuid
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   awsAccount   AwsAccount @relation(fields: [awsAccountId], references: [id])
-  awsAccountId String     @db.Uuid
 
+  @@unique([awsAccountId, region, remoteId])
+  @@map("EC2Instance")
   @@schema("microservice/cloudwatch")
 }
 
 model RdsInstance {
-  id           String     @id
+  id           String     @id @default(uuid()) @db.Uuid
   name         String
-  status       String?
-  region       AwsRegion
+  status       String
+  region       AWSRegion
+  remoteId     String
   isWatching   Boolean    @default(false)
+  awsAccountId String     @db.Uuid
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   awsAccount   AwsAccount @relation(fields: [awsAccountId], references: [id])
-  awsAccountId String     @db.Uuid
 
+  @@unique([awsAccountId, region, remoteId])
+  @@map("RDSInstance")
   @@schema("microservice/cloudwatch")
 }
 
-enum AwsRegion {
+enum AWSRegion {
   us_east_1
   us_east_2
 

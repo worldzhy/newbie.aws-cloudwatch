@@ -1,8 +1,12 @@
 {
   "config-service": {
-    "cloudwatch": {}
+    "cloudwatch": {
+      "awsAccountSecretEncryptKey": "process.env.CLOUDWATCH_AWS_ACCOUNT_SECRET_ENCRYPT_KEY"
+    }
   },
-  "env": {},
+  "env": {
+    "CLOUDWATCH_AWS_ACCOUNT_SECRET_ENCRYPT_KEY": ""
+  },
   "dependencies": {
     "@aws-sdk/client-cloudwatch": "^3.922.0",
     "@aws-sdk/client-ec2": "^3.940.0",
