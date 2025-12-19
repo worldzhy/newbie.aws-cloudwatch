@@ -8,12 +8,14 @@ import {
   SyncEC2InstancesWatchDto,
 } from '@microservices/cloudwatch/ec2-instance/ec2-instance.dto';
 import {ConfigService} from '@nestjs/config';
+import {CloudwatchService} from '@microservices/cloudwatch/cloudwatch.service';
 
 @Injectable()
 export class EC2InstanceService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly cloudwatchService: CloudwatchService
   ) {}
 
   async listEC2Instances(data: ListEC2InstancesDto) {
@@ -33,12 +35,12 @@ export class EC2InstanceService {
   async fetchEC2Instances(data: FetchEC2InstancesDto) {
     const {awsAccountId} = data;
     const awsAccount = await this.prisma.awsAccount.findUniqueOrThrow({where: {id: awsAccountId}});
-    // const {accessKeyId, secretAccessKey, regions} = awsAccount;
-    const {regions} = awsAccount;
+    const {accessKeyId, secretAccessKey, regions} = awsAccount;
+    // const {regions} = awsAccount;
 
     // Just for test.
-    const accessKeyId = <string>this.configService.get('microservices.aws-ses.accessKeyId');
-    const secretAccessKey = <string>this.configService.get('microservices.aws-ses.secretAccessKey');
+    // const accessKeyId = <string>this.configService.get('microservices.aws-ses.accessKeyId');
+    // const secretAccessKey = <string>this.configService.get('microservices.aws-ses.secretAccessKey');
 
     const ec2Instances: {
       name: string;
@@ -54,7 +56,7 @@ export class EC2InstanceService {
         region,
         credentials: {
           accessKeyId,
-          secretAccessKey,
+          secretAccessKey: this.cloudwatchService.decryptSecretAccessKey(secretAccessKey),
         },
       });
 

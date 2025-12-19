@@ -5,12 +5,14 @@ import {DescribeDBInstancesCommand, RDSClient} from '@aws-sdk/client-rds';
 import {FetchEC2InstancesDto} from '@microservices/cloudwatch/ec2-instance/ec2-instance.dto';
 import {AWSRegion} from '@prisma/client';
 import {ListRDSInstancesDto, SyncRDSInstancesWatchDto} from '@microservices/cloudwatch/rds-instance/rds-instance.dto';
+import {CloudwatchService} from '@microservices/cloudwatch/cloudwatch.service';
 
 @Injectable()
 export class RDSInstanceService {
   constructor(
     private readonly configService: ConfigService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
+    private readonly cloudwatchService: CloudwatchService
   ) {}
 
   async listRDSInstances(data: ListRDSInstancesDto) {
@@ -30,12 +32,12 @@ export class RDSInstanceService {
   async fetchRDSInstances(data: FetchEC2InstancesDto) {
     const {awsAccountId} = data;
     const awsAccount = await this.prisma.awsAccount.findUniqueOrThrow({where: {id: awsAccountId}});
-    // const {accessKeyId, secretAccessKey, regions} = awsAccount;
-    const {regions} = awsAccount;
+    const {accessKeyId, secretAccessKey, regions} = awsAccount;
 
     // Just for test.
-    const accessKeyId = <string>this.configService.get('microservices.aws-ses.accessKeyId');
-    const secretAccessKey = <string>this.configService.get('microservices.aws-ses.secretAccessKey');
+    // const accessKeyId = <string>this.configService.get('microservices.aws-ses.accessKeyId');
+    // const secretAccessKey = <string>this.configService.get('microservices.aws-ses.secretAccessKey');
+    // const {regions} = awsAccount;
 
     const rdsInstances: {
       name: string;
@@ -49,7 +51,10 @@ export class RDSInstanceService {
       const region = regions[i].replaceAll('_', '-');
       const client = new RDSClient({
         region,
-        credentials: {accessKeyId, secretAccessKey},
+        credentials: {
+          accessKeyId,
+          secretAccessKey: this.cloudwatchService.decryptSecretAccessKey(secretAccessKey),
+        },
       });
 
       const response = await client.send(new DescribeDBInstancesCommand({MaxRecords: 100}));

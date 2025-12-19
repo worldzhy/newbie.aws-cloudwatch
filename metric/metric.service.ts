@@ -55,8 +55,8 @@ export class MetricService {
     }
 
     // Just for test.
-    const accessKeyId = this.configService.get<string>('microservices.aws-ses.accessKeyId');
-    const secretAccessKey = this.configService.get<string>('microservices.aws-ses.secretAccessKey');
+    // const accessKeyId = this.configService.get<string>('microservices.aws-ses.accessKeyId');
+    // const secretAccessKey = this.configService.get<string>('microservices.aws-ses.secretAccessKey');
 
     const results: (
       | MetricDataResult
@@ -79,10 +79,8 @@ export class MetricService {
         endTime: dayjs(endTime).toDate(),
         period: periodNum,
         statistics,
-        accessKeyId,
-        secretAccessKey,
-        // accessKeyId: awsAccount.accessKeyId,
-        // secretAccessKey: awsAccount.secretAccessKey,
+        accessKeyId: awsAccount.accessKeyId,
+        secretAccessKey: this.cloudwatchService.decryptSecretAccessKey(awsAccount.secretAccessKey),
       };
       console.log(params);
       const metric = await this.cloudwatchService.getEC2InstancesCPUMetric(params);
@@ -152,8 +150,8 @@ export class MetricService {
     }
 
     // Just for test.
-    const accessKeyId = this.configService.get<string>('microservices.aws-ses.accessKeyId');
-    const secretAccessKey = this.configService.get<string>('microservices.aws-ses.secretAccessKey');
+    // const accessKeyId = this.configService.get<string>('microservices.aws-ses.accessKeyId');
+    // const secretAccessKey = this.configService.get<string>('microservices.aws-ses.secretAccessKey');
 
     const results: (
       | MetricDataResult
@@ -177,10 +175,8 @@ export class MetricService {
         period: periodNum,
         metricName,
         statistics,
-        accessKeyId,
-        secretAccessKey,
-        // accessKeyId: awsAccount.accessKeyId,
-        // secretAccessKey: awsAccount.secretAccessKey,
+        accessKeyId: awsAccount.accessKeyId,
+        secretAccessKey: this.cloudwatchService.decryptSecretAccessKey(awsAccount.secretAccessKey),
       };
       const metric = await this.cloudwatchService.getRDSInstancesMetric(params);
       if (metric) {
