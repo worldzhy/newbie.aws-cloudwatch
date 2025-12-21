@@ -7,55 +7,52 @@
 // * ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ //
 
 model AwsAccount {
-  id              String        @id @default(uuid()) @db.Uuid
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  awsAccountId    String        @unique
   iamUserName     String
   accessKeyId     String        @unique
   secretAccessKey String
-  regions         AWSRegion[]
+  regions         AwsRegion[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   ec2Instances    Ec2Instance[]
   rdsInstances    RdsInstance[]
 
-  @@map("AWSAccount")
   @@schema("microservice/cloudwatch")
 }
 
 model Ec2Instance {
-  id           String     @id @default(uuid()) @db.Uuid
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  instanceId   String     @unique
   name         String
   status       String
-  region       AWSRegion
-  remoteId     String
+  region       AwsRegion
   isWatching   Boolean    @default(false)
-  awsAccountId String     @db.Uuid
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   awsAccount   AwsAccount @relation(fields: [awsAccountId], references: [id])
+  awsAccountId String
 
-  @@unique([awsAccountId, region, remoteId])
-  @@map("EC2Instance")
   @@schema("microservice/cloudwatch")
 }
 
 model RdsInstance {
-  id           String     @id @default(uuid()) @db.Uuid
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  instanceId   String
   name         String
   status       String
-  region       AWSRegion
-  remoteId     String
+  region       AwsRegion
   isWatching   Boolean    @default(false)
-  awsAccountId String     @db.Uuid
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   awsAccount   AwsAccount @relation(fields: [awsAccountId], references: [id])
+  awsAccountId String
 
-  @@unique([awsAccountId, region, remoteId])
-  @@map("RDSInstance")
+  @@unique([instanceId, region, awsAccountId])
   @@schema("microservice/cloudwatch")
 }
 
-enum AWSRegion {
+enum AwsRegion {
   us_east_1
   us_east_2
 

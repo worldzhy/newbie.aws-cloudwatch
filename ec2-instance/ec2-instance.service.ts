@@ -1,20 +1,18 @@
 import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {DescribeInstancesCommand, EC2Client} from '@aws-sdk/client-ec2';
-import {AWSRegion, Prisma} from '@prisma/client';
+import {Prisma} from '@prisma/client';
 import {
   FetchEC2InstancesDto,
   ListEC2InstancesDto,
   SyncEC2InstancesWatchDto,
 } from '@microservices/cloudwatch/ec2-instance/ec2-instance.dto';
-import {ConfigService} from '@nestjs/config';
 import {CloudwatchService} from '@microservices/cloudwatch/cloudwatch.service';
 
 @Injectable()
 export class EC2InstanceService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
     private readonly cloudwatchService: CloudwatchService
   ) {}
 
@@ -36,19 +34,7 @@ export class EC2InstanceService {
     const {awsAccountId} = data;
     const awsAccount = await this.prisma.awsAccount.findUniqueOrThrow({where: {id: awsAccountId}});
     const {accessKeyId, secretAccessKey, regions} = awsAccount;
-    // const {regions} = awsAccount;
-
-    // Just for test.
-    // const accessKeyId = <string>this.configService.get('microservices.aws-ses.accessKeyId');
-    // const secretAccessKey = <string>this.configService.get('microservices.aws-ses.secretAccessKey');
-
-    const ec2Instances: {
-      name: string;
-      status: string;
-      region: AWSRegion;
-      remoteId: string;
-      awsAccountId: string;
-    }[] = [];
+    const ec2Instances: Prisma.Ec2InstanceCreateManyInput[] = [];
 
     for (let i = 0; i < regions.length; i++) {
       const region = regions[i].replaceAll('_', '-');
@@ -62,18 +48,17 @@ export class EC2InstanceService {
 
       const response = await client.send(new DescribeInstancesCommand({MaxResults: 1000}));
       if (response.Reservations) {
-        const ec2InstanceCreateManyInputs: Prisma.Ec2InstanceCreateManyInput[] = [];
         for (const reservation of response.Reservations) {
           if (reservation.Instances) {
-            for (const inst of reservation.Instances) {
-              const id = inst.InstanceId!;
-              const state = inst.State?.Name as string;
-              const nameTag = inst.Tags?.find(t => t.Key === 'Name');
+            for (const instance of reservation.Instances) {
+              const id = instance.InstanceId!;
+              const state = instance.State?.Name as string;
+              const nameTag = instance.Tags?.find(t => t.Key === 'Name');
               ec2Instances.push({
+                instanceId: id,
                 name: nameTag?.Value ?? id,
                 status: state,
                 region: regions[i],
-                remoteId: id,
                 awsAccountId,
               });
             }
@@ -84,47 +69,34 @@ export class EC2InstanceService {
 
     if (ec2Instances.length) {
       await this.prisma.$transaction(async tx => {
-        const currentRemoteIdObjs = await tx.ec2Instance.findMany({
-          where: {
-            awsAccountId,
-          },
-          select: {
-            remoteId: true,
-          },
+        const currentInstanceIdObjs = await tx.ec2Instance.findMany({
+          where: {awsAccountId},
+          select: {instanceId: true},
         });
-        const ec2InstanceRemoteIds = ec2Instances.map(item => item.remoteId);
-        const deleteIds = currentRemoteIdObjs
-          .filter(item => !ec2InstanceRemoteIds.includes(item.remoteId))
-          .map(item => item.remoteId);
+        const ec2InstanceRemoteIds = ec2Instances.map(item => item.instanceId);
+        const deleteIds = currentInstanceIdObjs
+          .filter(item => !ec2InstanceRemoteIds.includes(item.instanceId))
+          .map(item => item.instanceId);
         if (deleteIds.length) {
           await tx.ec2Instance.deleteMany({
             where: {
-              awsAccountId,
-              remoteId: {
-                in: deleteIds,
-              },
+              instanceId: {in: deleteIds},
             },
           });
         }
         for (const ec2Instance of ec2Instances) {
           await tx.ec2Instance.upsert({
-            where: {
-              awsAccountId_region_remoteId: {
-                awsAccountId,
-                region: ec2Instance.region,
-                remoteId: ec2Instance.remoteId,
-              },
-            },
+            where: {instanceId: ec2Instance.instanceId},
             update: {
               name: ec2Instance.name,
               status: ec2Instance.status,
               region: ec2Instance.region,
             },
             create: {
+              instanceId: ec2Instance.instanceId,
               name: ec2Instance.name,
               status: ec2Instance.status,
               region: ec2Instance.region,
-              remoteId: ec2Instance.remoteId,
               awsAccountId,
             },
           });

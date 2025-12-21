@@ -1,16 +1,14 @@
 import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
 import {PrismaService} from '@framework/prisma/prisma.service';
-import {ConfigService} from '@nestjs/config';
 import {DescribeDBInstancesCommand, RDSClient} from '@aws-sdk/client-rds';
 import {FetchEC2InstancesDto} from '@microservices/cloudwatch/ec2-instance/ec2-instance.dto';
-import {AWSRegion} from '@prisma/client';
+import {AwsRegion} from '@prisma/client';
 import {ListRDSInstancesDto, SyncRDSInstancesWatchDto} from '@microservices/cloudwatch/rds-instance/rds-instance.dto';
 import {CloudwatchService} from '@microservices/cloudwatch/cloudwatch.service';
 
 @Injectable()
 export class RDSInstanceService {
   constructor(
-    private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     private readonly cloudwatchService: CloudwatchService
   ) {}
@@ -33,17 +31,11 @@ export class RDSInstanceService {
     const {awsAccountId} = data;
     const awsAccount = await this.prisma.awsAccount.findUniqueOrThrow({where: {id: awsAccountId}});
     const {accessKeyId, secretAccessKey, regions} = awsAccount;
-
-    // Just for test.
-    // const accessKeyId = <string>this.configService.get('microservices.aws-ses.accessKeyId');
-    // const secretAccessKey = <string>this.configService.get('microservices.aws-ses.secretAccessKey');
-    // const {regions} = awsAccount;
-
     const rdsInstances: {
+      instanceId: string;
       name: string;
       status: string;
-      region: AWSRegion;
-      remoteId: string;
+      region: AwsRegion;
       awsAccountId: string;
     }[] = [];
 
@@ -73,7 +65,7 @@ export class RDSInstanceService {
             name,
             status: dbInstance.DBInstanceStatus!,
             region: regions[i],
-            remoteId: id,
+            instanceId: id,
             awsAccountId,
           });
         }
@@ -87,18 +79,18 @@ export class RDSInstanceService {
             awsAccountId,
           },
           select: {
-            remoteId: true,
+            instanceId: true,
           },
         });
-        const rdsInstanceRemoteIds = rdsInstances.map(item => item.remoteId);
+        const rdsInstanceRemoteIds = rdsInstances.map(item => item.instanceId);
         const deleteIds = currentRemoteIdObjs
-          .filter(item => !rdsInstanceRemoteIds.includes(item.remoteId))
-          .map(item => item.remoteId);
+          .filter(item => !rdsInstanceRemoteIds.includes(item.instanceId))
+          .map(item => item.instanceId);
         if (deleteIds.length) {
           await tx.rdsInstance.deleteMany({
             where: {
               awsAccountId,
-              remoteId: {
+              instanceId: {
                 in: deleteIds,
               },
             },
@@ -107,10 +99,10 @@ export class RDSInstanceService {
         for (const rdsInstance of rdsInstances) {
           await tx.rdsInstance.upsert({
             where: {
-              awsAccountId_region_remoteId: {
-                awsAccountId,
+              instanceId_region_awsAccountId: {
+                instanceId: rdsInstance.instanceId,
                 region: rdsInstance.region,
-                remoteId: rdsInstance.remoteId,
+                awsAccountId,
               },
             },
             update: {
@@ -119,10 +111,10 @@ export class RDSInstanceService {
               region: rdsInstance.region,
             },
             create: {
+              instanceId: rdsInstance.instanceId,
               name: rdsInstance.name,
               status: rdsInstance.status,
               region: rdsInstance.region,
-              remoteId: rdsInstance.remoteId,
               awsAccountId,
             },
           });

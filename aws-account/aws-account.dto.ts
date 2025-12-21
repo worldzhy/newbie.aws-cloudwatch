@@ -3,6 +3,11 @@ import {ArrayMinSize, IsArray, IsEnum, IsNotEmpty, IsString, ValidateIf} from 'c
 import {AWSRegion} from '@microservices/cloudwatch/cloudwatch.enum';
 
 export class CreateAWSAccountDto {
+  @ApiProperty({type: String, required: true})
+  @IsNotEmpty()
+  @IsString()
+  awsAccountId: string;
+
   @ApiProperty({type: String})
   @IsNotEmpty()
   @IsString()
@@ -30,6 +35,11 @@ export class CreateAWSAccountDto {
 }
 
 export class UpdateAWSAccountDto {
+  @ApiProperty({type: String, required: false})
+  @IsNotEmpty()
+  @IsString()
+  awsAccountId?: string;
+
   @ApiPropertyOptional({type: String})
   @ValidateIf(o => o.iamUserName !== undefined)
   @IsString()

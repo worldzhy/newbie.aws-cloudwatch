@@ -1,23 +1,44 @@
 import {Body, Controller, Get, Param, Patch, Post} from '@nestjs/common';
-import {AWSAccountService} from '@microservices/cloudwatch/aws-account/aws-account.service';
 import {CreateAWSAccountDto, UpdateAWSAccountDto} from '@microservices/cloudwatch/aws-account/aws-account.dto';
+import {PrismaService} from '@framework/prisma/prisma.service';
+import {CloudwatchService} from '../cloudwatch.service';
 
 @Controller('awsAccounts')
 export class AWSAccountController {
-  constructor(private readonly awsAccountService: AWSAccountService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudwatchService: CloudwatchService
+  ) {}
 
-  @Get(':awsAccountId')
-  async getAWSAccount(@Param('awsAccountId') awsAccountId: string) {
-    return await this.awsAccountService.getAWSAccount(awsAccountId);
+  @Get(':id')
+  async getAWSAccount(@Param('id') id: string) {
+    return await this.prisma.awsAccount.findUnique({
+      where: {id},
+    });
   }
 
   @Post()
   async createAWSAccount(@Body() body: CreateAWSAccountDto) {
-    return await this.awsAccountService.createAWSAccount(body);
+    const {secretAccessKey, ...rest} = body;
+
+    return await this.prisma.awsAccount.create({
+      data: {
+        ...rest,
+        secretAccessKey: this.cloudwatchService.encryptSecretAccessKey(secretAccessKey),
+      },
+    });
   }
 
-  @Patch(':awsAccountId')
-  async updateAWSAccount(@Param('awsAccountId') awsAccountId: string, @Body() body: UpdateAWSAccountDto) {
-    return await this.awsAccountService.updateAWSAccount(awsAccountId, body);
+  @Patch(':id')
+  async updateAWSAccount(@Param('id') id: string, @Body() body: UpdateAWSAccountDto) {
+    const {secretAccessKey, ...rest} = body;
+
+    return await this.prisma.awsAccount.update({
+      where: {id},
+      data: {
+        ...rest,
+        secretAccessKey: secretAccessKey ? this.cloudwatchService.encryptSecretAccessKey(secretAccessKey) : undefined,
+      },
+    });
   }
 }

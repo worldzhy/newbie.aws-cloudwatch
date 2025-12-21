@@ -1,7 +1,7 @@
 import {Injectable} from '@nestjs/common';
 import {CloudWatchClient, GetMetricDataCommand} from '@aws-sdk/client-cloudwatch';
-import {CloudwatchMetricRDSMetricName, CloudwatchMetricStatistics} from '@microservices/cloudwatch/cloudwatch.enum';
 import {ConfigService} from '@nestjs/config';
+import {GetEC2InstancesCPUMetricParams, GetRDSInstancesMetricParams} from './cloudwatch.interface';
 
 const CryptoJS = require('crypto-js');
 
@@ -28,17 +28,8 @@ export class CloudwatchService {
     return client;
   }
 
-  async getEC2InstancesCPUMetric(args: {
-    ec2InstanceRemoteIds: string[];
-    region: string;
-    startTime: Date;
-    endTime: Date;
-    period: number;
-    statistics: CloudwatchMetricStatistics;
-    accessKeyId?: string;
-    secretAccessKey?: string;
-  }) {
-    const {ec2InstanceRemoteIds, accessKeyId, secretAccessKey, region, startTime, endTime, period, statistics} = args;
+  async getEC2InstancesCPUMetric(params: GetEC2InstancesCPUMetricParams) {
+    const {ec2InstanceRemoteIds, accessKeyId, secretAccessKey, region, startTime, endTime, period, statistics} = params;
     const cloudwatchClient = this.initCloudwatchClient({
       accessKeyId,
       secretAccessKey,
@@ -73,18 +64,7 @@ export class CloudwatchService {
     return null;
   }
 
-  async getRDSInstancesMetric(args: {
-    rdsInstanceRemoteIds: string[];
-    metricName: CloudwatchMetricRDSMetricName;
-    region: string;
-    instanceId: string;
-    startTime: Date;
-    endTime: Date;
-    period: number;
-    statistics: CloudwatchMetricStatistics;
-    accessKeyId?: string;
-    secretAccessKey?: string;
-  }) {
+  async getRDSInstancesMetric(params: GetRDSInstancesMetricParams) {
     const {
       rdsInstanceRemoteIds,
       accessKeyId,
@@ -95,7 +75,7 @@ export class CloudwatchService {
       endTime,
       period,
       statistics,
-    } = args;
+    } = params;
     const cloudwatchClient = this.initCloudwatchClient({
       accessKeyId,
       secretAccessKey,

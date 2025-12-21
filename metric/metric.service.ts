@@ -2,15 +2,14 @@ import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {CloudwatchService} from '@microservices/cloudwatch/cloudwatch.service';
 import {GetWatchedEC2InstancesCPUMetricDto, GetWatchedRDSInstancesMetricDto} from './metric.dto'; // import dayjs from 'dayjs';
-import {ConfigService} from '@nestjs/config';
 import {MetricDataResult} from '@aws-sdk/client-cloudwatch';
+import {GetEC2InstancesCPUMetricParams, GetRDSInstancesMetricParams} from '../cloudwatch.interface';
 
 const dayjs = require('dayjs');
 
 @Injectable()
 export class MetricService {
   constructor(
-    private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     private readonly cloudwatchService: CloudwatchService
   ) {}
@@ -54,10 +53,6 @@ export class MetricService {
       throw new HttpException('Invalid end time', HttpStatus.BAD_REQUEST);
     }
 
-    // Just for test.
-    // const accessKeyId = this.configService.get<string>('microservices.aws-ses.accessKeyId');
-    // const secretAccessKey = this.configService.get<string>('microservices.aws-ses.secretAccessKey');
-
     const results: (
       | MetricDataResult
       | {
@@ -72,8 +67,8 @@ export class MetricService {
 
     for (const region of awsAccount.regions) {
       // Get metric.
-      const params: any = {
-        ec2InstanceRemoteIds: ec2Instances.filter(item => item.region === region).map(item => item.remoteId),
+      const params: GetEC2InstancesCPUMetricParams = {
+        ec2InstanceRemoteIds: ec2Instances.filter(item => item.region === region).map(item => item.instanceId),
         region: region.replaceAll('_', '-'),
         startTime: dayjs(startTime).toDate(),
         endTime: dayjs(endTime).toDate(),
@@ -82,7 +77,7 @@ export class MetricService {
         accessKeyId: awsAccount.accessKeyId,
         secretAccessKey: this.cloudwatchService.decryptSecretAccessKey(awsAccount.secretAccessKey),
       };
-      console.log(params);
+
       const metric = await this.cloudwatchService.getEC2InstancesCPUMetric(params);
       if (metric) {
         metric.MetricDataResults?.forEach(result => {
@@ -149,10 +144,6 @@ export class MetricService {
       throw new HttpException('Invalid end time', HttpStatus.BAD_REQUEST);
     }
 
-    // Just for test.
-    // const accessKeyId = this.configService.get<string>('microservices.aws-ses.accessKeyId');
-    // const secretAccessKey = this.configService.get<string>('microservices.aws-ses.secretAccessKey');
-
     const results: (
       | MetricDataResult
       | {
@@ -167,8 +158,8 @@ export class MetricService {
 
     for (const region of awsAccount.regions) {
       // Get metric.
-      const params: any = {
-        rdsInstanceRemoteIds: rdsInstances.filter(item => item.region === region).map(item => item.remoteId),
+      const params: GetRDSInstancesMetricParams = {
+        rdsInstanceRemoteIds: rdsInstances.filter(item => item.region === region).map(item => item.instanceId),
         region: region.replaceAll('_', '-'),
         startTime: dayjs(startTime).toDate(),
         endTime: dayjs(endTime).toDate(),
