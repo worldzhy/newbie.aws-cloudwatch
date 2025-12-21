@@ -18,7 +18,7 @@ model AwsAccount {
   ec2Instances    Ec2Instance[]
   rdsInstances    RdsInstance[]
 
-  @@schema("microservice/cloudwatch")
+  @@schema("microservice/aws-cloudwatch")
 }
 
 model Ec2Instance {
@@ -33,7 +33,7 @@ model Ec2Instance {
   awsAccount   AwsAccount @relation(fields: [awsAccountId], references: [id])
   awsAccountId String
 
-  @@schema("microservice/cloudwatch")
+  @@schema("microservice/aws-cloudwatch")
 }
 
 model RdsInstance {
@@ -49,12 +49,12 @@ model RdsInstance {
   awsAccountId String
 
   @@unique([instanceId, region, awsAccountId])
-  @@schema("microservice/cloudwatch")
+  @@schema("microservice/aws-cloudwatch")
 }
 
 enum AwsRegion {
   us_east_1
   us_east_2
 
-  @@schema("microservice/cloudwatch")
+  @@schema("microservice/aws-cloudwatch")
 }
