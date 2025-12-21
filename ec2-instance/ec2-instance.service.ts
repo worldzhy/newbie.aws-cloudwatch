@@ -6,14 +6,14 @@ import {
   FetchEC2InstancesDto,
   ListEC2InstancesDto,
   SyncEC2InstancesWatchDto,
-} from '@microservices/cloudwatch/ec2-instance/ec2-instance.dto';
-import {CloudwatchService} from '@microservices/cloudwatch/cloudwatch.service';
+} from '@microservices/aws-cloudwatch/ec2-instance/ec2-instance.dto';
+import {AwsCloudwatchService} from '@microservices/aws-cloudwatch/aws-cloudwatch.service';
 
 @Injectable()
 export class EC2InstanceService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cloudwatchService: CloudwatchService
+    private readonly cloudwatchService: AwsCloudwatchService
   ) {}
 
   async listEC2Instances(data: ListEC2InstancesDto) {

@@ -1,5 +1,8 @@
 import {IsEnum, IsNotEmpty, IsNumberString, IsUUID} from 'class-validator';
-import {CloudwatchMetricRDSMetricName, CloudwatchMetricStatistics} from '@microservices/cloudwatch/cloudwatch.enum';
+import {
+  CloudwatchMetricRDSMetricName,
+  CloudwatchMetricStatistics,
+} from '@microservices/aws-cloudwatch/aws-cloudwatch.enum';
 import {ApiProperty} from '@nestjs/swagger';
 
 export class GetWatchedEC2InstancesCPUMetricDto {

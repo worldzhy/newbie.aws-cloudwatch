@@ -1,12 +1,12 @@
 import {Injectable} from '@nestjs/common';
 import {CloudWatchClient, GetMetricDataCommand} from '@aws-sdk/client-cloudwatch';
 import {ConfigService} from '@nestjs/config';
-import {GetEC2InstancesCPUMetricParams, GetRDSInstancesMetricParams} from './cloudwatch.interface';
+import {GetEC2InstancesCPUMetricParams, GetRDSInstancesMetricParams} from './aws-cloudwatch.interface';
 
 const CryptoJS = require('crypto-js');
 
 @Injectable()
-export class CloudwatchService {
+export class AwsCloudwatchService {
   constructor(private readonly configService: ConfigService) {}
 
   private initCloudwatchClient(args: {accessKeyId?: string; secretAccessKey?: string; region: string}) {

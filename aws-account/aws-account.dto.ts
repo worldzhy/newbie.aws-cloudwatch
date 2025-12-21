@@ -1,6 +1,6 @@
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger';
 import {ArrayMinSize, IsArray, IsEnum, IsNotEmpty, IsString, ValidateIf} from 'class-validator';
-import {AWSRegion} from '@microservices/cloudwatch/cloudwatch.enum';
+import {AWSRegion} from '@microservices/aws-cloudwatch/aws-cloudwatch.enum';
 
 export class CreateAWSAccountDto {
   @ApiProperty({type: String, required: true})

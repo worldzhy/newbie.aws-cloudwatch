@@ -1,16 +1,19 @@
 import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {DescribeDBInstancesCommand, RDSClient} from '@aws-sdk/client-rds';
-import {FetchEC2InstancesDto} from '@microservices/cloudwatch/ec2-instance/ec2-instance.dto';
+import {FetchEC2InstancesDto} from '@microservices/aws-cloudwatch/ec2-instance/ec2-instance.dto';
 import {AwsRegion} from '@prisma/client';
-import {ListRDSInstancesDto, SyncRDSInstancesWatchDto} from '@microservices/cloudwatch/rds-instance/rds-instance.dto';
-import {CloudwatchService} from '@microservices/cloudwatch/cloudwatch.service';
+import {
+  ListRDSInstancesDto,
+  SyncRDSInstancesWatchDto,
+} from '@microservices/aws-cloudwatch/rds-instance/rds-instance.dto';
+import {AwsCloudwatchService} from '@microservices/aws-cloudwatch/aws-cloudwatch.service';
 
 @Injectable()
 export class RDSInstanceService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cloudwatchService: CloudwatchService
+    private readonly cloudwatchService: AwsCloudwatchService
   ) {}
 
   async listRDSInstances(data: ListRDSInstancesDto) {

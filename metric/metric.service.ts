@@ -1,9 +1,9 @@
 import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
 import {PrismaService} from '@framework/prisma/prisma.service';
-import {CloudwatchService} from '@microservices/cloudwatch/cloudwatch.service';
+import {AwsCloudwatchService} from '@microservices/aws-cloudwatch/aws-cloudwatch.service';
 import {GetWatchedEC2InstancesCPUMetricDto, GetWatchedRDSInstancesMetricDto} from './metric.dto'; // import dayjs from 'dayjs';
 import {MetricDataResult} from '@aws-sdk/client-cloudwatch';
-import {GetEC2InstancesCPUMetricParams, GetRDSInstancesMetricParams} from '../cloudwatch.interface';
+import {GetEC2InstancesCPUMetricParams, GetRDSInstancesMetricParams} from '../aws-cloudwatch.interface';
 
 const dayjs = require('dayjs');
 
@@ -11,7 +11,7 @@ const dayjs = require('dayjs');
 export class MetricService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cloudwatchService: CloudwatchService
+    private readonly cloudwatchService: AwsCloudwatchService
   ) {}
 
   async getWatchedEC2InstancesCPUMetric(data: GetWatchedEC2InstancesCPUMetricDto) {

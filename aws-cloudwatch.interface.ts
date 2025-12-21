@@ -1,4 +1,4 @@
-import {CloudwatchMetricRDSMetricName, CloudwatchMetricStatistics} from './cloudwatch.enum';
+import {CloudwatchMetricRDSMetricName, CloudwatchMetricStatistics} from './aws-cloudwatch.enum';
 
 export interface GetEC2InstancesCPUMetricParams {
   ec2InstanceRemoteIds: string[];

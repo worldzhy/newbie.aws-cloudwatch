@@ -1,13 +1,13 @@
 import {Body, Controller, Get, Param, Patch, Post} from '@nestjs/common';
-import {CreateAWSAccountDto, UpdateAWSAccountDto} from '@microservices/cloudwatch/aws-account/aws-account.dto';
+import {CreateAWSAccountDto, UpdateAWSAccountDto} from '@microservices/aws-cloudwatch/aws-account/aws-account.dto';
 import {PrismaService} from '@framework/prisma/prisma.service';
-import {CloudwatchService} from '../cloudwatch.service';
+import {AwsCloudwatchService} from '../aws-cloudwatch.service';
 
 @Controller('awsAccounts')
 export class AWSAccountController {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cloudwatchService: CloudwatchService
+    private readonly cloudwatchService: AwsCloudwatchService
   ) {}
 
   @Get(':id')
