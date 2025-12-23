@@ -4,15 +4,24 @@ import {AwsCloudwatchService} from '@microservices/aws-cloudwatch/aws-cloudwatch
 import {GetWatchedEC2InstancesCPUMetricDto, GetWatchedRDSInstancesMetricDto} from './metric.dto'; // import dayjs from 'dayjs';
 import {MetricDataResult} from '@aws-sdk/client-cloudwatch';
 import {GetEC2InstancesCPUMetricParams, GetRDSInstancesMetricParams} from '../aws-cloudwatch.interface';
+import {ConfigService} from '@nestjs/config';
+import {decryptString} from '@framework/utilities/crypto.util';
 
 const dayjs = require('dayjs');
 
 @Injectable()
 export class MetricService {
+  private readonly encryptKey: string;
+  private readonly encryptIV: string;
+
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cloudwatchService: AwsCloudwatchService
-  ) {}
+    private readonly cloudwatchService: AwsCloudwatchService,
+    private readonly configService: ConfigService
+  ) {
+    this.encryptKey = this.configService.get('microservices.cloudwatch.cryptoEncryptKey') as string;
+    this.encryptIV = this.configService.get('microservices.cloudwatch.cryptoEncryptIV') as string;
+  }
 
   async getWatchedEC2InstancesCPUMetric(data: GetWatchedEC2InstancesCPUMetricDto) {
     const {awsAccountId, startTime, endTime, period, statistics} = data;
@@ -75,7 +84,7 @@ export class MetricService {
         period: periodNum,
         statistics,
         accessKeyId: awsAccount.accessKeyId,
-        secretAccessKey: this.cloudwatchService.decryptSecretAccessKey(awsAccount.secretAccessKey),
+        secretAccessKey: decryptString(awsAccount.secretAccessKey, this.encryptKey, this.encryptIV),
       };
 
       const metric = await this.cloudwatchService.getEC2InstancesCPUMetric(params);
@@ -167,7 +176,7 @@ export class MetricService {
         metricName,
         statistics,
         accessKeyId: awsAccount.accessKeyId,
-        secretAccessKey: this.cloudwatchService.decryptSecretAccessKey(awsAccount.secretAccessKey),
+        secretAccessKey: decryptString(awsAccount.secretAccessKey, this.encryptKey, this.encryptIV),
       };
       const metric = await this.cloudwatchService.getRDSInstancesMetric(params);
       if (metric) {

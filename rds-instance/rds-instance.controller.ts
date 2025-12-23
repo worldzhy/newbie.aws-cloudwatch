@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Patch, Query} from '@nestjs/common';
+import {Body, Controller, Get, Param, Patch, Query} from '@nestjs/common';
 import {RDSInstanceService} from './rds-instance.service';
 import {FetchRDSInstancesDto, ListRDSInstancesDto, SyncRDSInstancesWatchDto} from './rds-instance.dto';
 
@@ -19,5 +19,15 @@ export class RDSInstanceController {
   @Patch('syncWatch')
   async syncRDSInstancesWatch(@Body() body: SyncRDSInstancesWatchDto) {
     return await this.rdsInstanceService.syncRDSInstancesWatch(body);
+  }
+
+  @Patch('watch/:rdsInstanceId')
+  async watchRDSInstance(@Param('rdsInstanceId') rdsInstanceId: string) {
+    return await this.rdsInstanceService.watchRDSInstance(rdsInstanceId);
+  }
+
+  @Patch('watch/:rdsInstanceId')
+  async unwatchRDSInstance(@Param('rdsInstanceId') rdsInstanceId: string) {
+    return await this.rdsInstanceService.unwatchRDSInstance(rdsInstanceId);
   }
 }

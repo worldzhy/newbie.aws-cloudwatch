@@ -103,15 +103,4 @@ export class AwsCloudwatchService {
     }
     return null;
   }
-
-  encryptSecretAccessKey(secretAccessKey: string) {
-    const encryptKey = this.configService.get('microservices.cloudwatch.encryptKey') as string;
-    return CryptoJS.AES.encrypt(secretAccessKey, encryptKey).toString();
-  }
-
-  decryptSecretAccessKey(encryptedSecretAccessKey: string) {
-    const encryptKey = this.configService.get('microservices.cloudwatch.encryptKey') as string;
-    const bytes = CryptoJS.AES.decrypt(encryptedSecretAccessKey, encryptKey);
-    return bytes.toString(CryptoJS.enc.Utf8);
-  }
 }

@@ -7,14 +7,21 @@ import {
   ListRDSInstancesDto,
   SyncRDSInstancesWatchDto,
 } from '@microservices/aws-cloudwatch/rds-instance/rds-instance.dto';
-import {AwsCloudwatchService} from '@microservices/aws-cloudwatch/aws-cloudwatch.service';
+import {ConfigService} from '@nestjs/config';
+import {decryptString} from '@framework/utilities/crypto.util';
 
 @Injectable()
 export class RDSInstanceService {
+  private readonly encryptKey: string;
+  private readonly encryptIV: string;
+
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cloudwatchService: AwsCloudwatchService
-  ) {}
+    private readonly configService: ConfigService
+  ) {
+    this.encryptKey = this.configService.get('microservices.cloudwatch.cryptoEncryptKey') as string;
+    this.encryptIV = this.configService.get('microservices.cloudwatch.cryptoEncryptIV') as string;
+  }
 
   async listRDSInstances(data: ListRDSInstancesDto) {
     const {awsAccountId, isWatching} = data;
@@ -48,7 +55,7 @@ export class RDSInstanceService {
         region,
         credentials: {
           accessKeyId,
-          secretAccessKey: this.cloudwatchService.decryptSecretAccessKey(secretAccessKey),
+          secretAccessKey: decryptString(secretAccessKey, this.encryptKey, this.encryptIV),
         },
       });
 
@@ -188,8 +195,41 @@ export class RDSInstanceService {
           });
         }
       });
-
-      return true;
     }
+    return true;
+  }
+
+  async watchRDSInstance(rdsInstanceId: string) {
+    const rdsInstance = await this.prisma.rdsInstance.findUniqueOrThrow({
+      where: {
+        id: rdsInstanceId,
+      },
+    });
+    await this.prisma.rdsInstance.update({
+      where: {
+        id: rdsInstance.id,
+      },
+      data: {
+        isWatching: true,
+      },
+    });
+    return true;
+  }
+
+  async unwatchRDSInstance(rdsInstanceId: string) {
+    const rdsInstance = await this.prisma.rdsInstance.findUniqueOrThrow({
+      where: {
+        id: rdsInstanceId,
+      },
+    });
+    await this.prisma.rdsInstance.update({
+      where: {
+        id: rdsInstance.id,
+      },
+      data: {
+        isWatching: false,
+      },
+    });
+    return true;
   }
 }

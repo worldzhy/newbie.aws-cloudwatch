@@ -7,14 +7,21 @@ import {
   ListEC2InstancesDto,
   SyncEC2InstancesWatchDto,
 } from '@microservices/aws-cloudwatch/ec2-instance/ec2-instance.dto';
-import {AwsCloudwatchService} from '@microservices/aws-cloudwatch/aws-cloudwatch.service';
+import {ConfigService} from '@nestjs/config';
+import {decryptString} from '@framework/utilities/crypto.util';
 
 @Injectable()
 export class EC2InstanceService {
+  private readonly encryptKey: string;
+  private readonly encryptIV: string;
+
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cloudwatchService: AwsCloudwatchService
-  ) {}
+    private readonly configService: ConfigService
+  ) {
+    this.encryptKey = this.configService.get('microservices.cloudwatch.cryptoEncryptKey') as string;
+    this.encryptIV = this.configService.get('microservices.cloudwatch.cryptoEncryptIV') as string;
+  }
 
   async listEC2Instances(data: ListEC2InstancesDto) {
     const {awsAccountId, isWatching} = data;
@@ -42,7 +49,7 @@ export class EC2InstanceService {
         region,
         credentials: {
           accessKeyId,
-          secretAccessKey: this.cloudwatchService.decryptSecretAccessKey(secretAccessKey),
+          secretAccessKey: decryptString(secretAccessKey, this.encryptKey, this.encryptIV),
         },
       });
 
@@ -167,8 +174,42 @@ export class EC2InstanceService {
           });
         }
       });
-
-      return true;
     }
+
+    return true;
+  }
+
+  async watchEC2Instance(ec2InstanceId: string) {
+    const ec2Instance = await this.prisma.ec2Instance.findUniqueOrThrow({
+      where: {
+        id: ec2InstanceId,
+      },
+    });
+    await this.prisma.ec2Instance.update({
+      where: {
+        id: ec2Instance.id,
+      },
+      data: {
+        isWatching: true,
+      },
+    });
+    return true;
+  }
+
+  async unwatchEC2Instance(ec2InstanceId: string) {
+    const ec2Instance = await this.prisma.ec2Instance.findUniqueOrThrow({
+      where: {
+        id: ec2InstanceId,
+      },
+    });
+    await this.prisma.ec2Instance.update({
+      where: {
+        id: ec2Instance.id,
+      },
+      data: {
+        isWatching: false,
+      },
+    });
+    return true;
   }
 }
