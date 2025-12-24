@@ -23,25 +23,10 @@ export class EC2InstanceService {
     this.encryptIV = this.configService.get('microservices.cloudwatch.cryptoEncryptIV') as string;
   }
 
-  async listEC2Instances(data: ListEC2InstancesDto) {
-    const {awsAccountId, isWatching} = data;
-    const ec2Instances = await this.prisma.ec2Instance.findMany({
-      where: {
-        awsAccountId,
-        isWatching: isWatching === 'true' || isWatching === '1' ? true : undefined,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-    return ec2Instances;
-  }
-
-  async fetchEC2Instances(data: FetchEC2InstancesDto) {
-    const {awsAccountId} = data;
+  async fetchEC2Instances(awsAccountId: string) {
     const awsAccount = await this.prisma.awsAccount.findUniqueOrThrow({where: {id: awsAccountId}});
     const {accessKeyId, secretAccessKey, regions} = awsAccount;
-    const ec2Instances: Prisma.Ec2InstanceCreateManyInput[] = [];
+    const ec2InstanceCreateManyInputs: Prisma.Ec2InstanceCreateManyInput[] = [];
 
     for (let i = 0; i < regions.length; i++) {
       const region = regions[i].replaceAll('_', '-');
@@ -58,13 +43,11 @@ export class EC2InstanceService {
         for (const reservation of response.Reservations) {
           if (reservation.Instances) {
             for (const instance of reservation.Instances) {
-              const id = instance.InstanceId!;
-              const state = instance.State?.Name as string;
               const nameTag = instance.Tags?.find(t => t.Key === 'Name');
-              ec2Instances.push({
-                instanceId: id,
-                name: nameTag?.Value ?? id,
-                status: state,
+              ec2InstanceCreateManyInputs.push({
+                instanceId: instance.InstanceId!,
+                name: nameTag?.Value ?? instance.InstanceId!,
+                status: instance.State?.Name,
                 region: regions[i],
                 awsAccountId,
               });
@@ -74,24 +57,20 @@ export class EC2InstanceService {
       }
     }
 
-    if (ec2Instances.length) {
+    if (ec2InstanceCreateManyInputs.length) {
       await this.prisma.$transaction(async tx => {
         const currentInstanceIdObjs = await tx.ec2Instance.findMany({
           where: {awsAccountId},
           select: {instanceId: true},
         });
-        const ec2InstanceRemoteIds = ec2Instances.map(item => item.instanceId);
+        const ec2InstanceRemoteIds = ec2InstanceCreateManyInputs.map(item => item.instanceId);
         const deleteIds = currentInstanceIdObjs
           .filter(item => !ec2InstanceRemoteIds.includes(item.instanceId))
           .map(item => item.instanceId);
         if (deleteIds.length) {
-          await tx.ec2Instance.deleteMany({
-            where: {
-              instanceId: {in: deleteIds},
-            },
-          });
+          await tx.ec2Instance.deleteMany({where: {instanceId: {in: deleteIds}}});
         }
-        for (const ec2Instance of ec2Instances) {
+        for (const ec2Instance of ec2InstanceCreateManyInputs) {
           await tx.ec2Instance.upsert({
             where: {instanceId: ec2Instance.instanceId},
             update: {
@@ -179,37 +158,20 @@ export class EC2InstanceService {
     return true;
   }
 
-  async watchEC2Instance(ec2InstanceId: string) {
-    const ec2Instance = await this.prisma.ec2Instance.findUniqueOrThrow({
-      where: {
-        id: ec2InstanceId,
-      },
-    });
-    await this.prisma.ec2Instance.update({
-      where: {
-        id: ec2Instance.id,
-      },
-      data: {
-        isWatching: true,
-      },
-    });
-    return true;
+  async watchEC2Instance(id: string) {
+    return await this.prisma.ec2Instance.update({where: {id}, data: {isWatching: true}});
   }
 
-  async unwatchEC2Instance(ec2InstanceId: string) {
-    const ec2Instance = await this.prisma.ec2Instance.findUniqueOrThrow({
-      where: {
-        id: ec2InstanceId,
-      },
-    });
-    await this.prisma.ec2Instance.update({
-      where: {
-        id: ec2Instance.id,
-      },
-      data: {
-        isWatching: false,
-      },
-    });
-    return true;
+  async unwatchEC2Instance(id: string) {
+    return await this.prisma.ec2Instance.update({where: {id}, data: {isWatching: false}});
+  }
+
+  async getWatchingInstances(awsAccountId: string) {
+    return await this.prisma.ec2Instance.findMany({where: {awsAccountId, isWatching: true}});
+  }
+
+  async getWatchingInstanceIds(awsAccountId: string) {
+    const instances = await this.prisma.ec2Instance.findMany({where: {awsAccountId, isWatching: true}});
+    return instances.map(instances => instances.id);
   }
 }

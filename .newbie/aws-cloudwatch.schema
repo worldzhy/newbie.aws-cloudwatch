@@ -7,7 +7,7 @@
 // * ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ //
 
 model AwsAccount {
-  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id              String        @id @default(uuid())
   awsAccountId    String        @unique
   iamUserName     String
   accessKeyId     String        @unique
@@ -22,22 +22,22 @@ model AwsAccount {
 }
 
 model Ec2Instance {
-  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id           String     @id @default(uuid())
   instanceId   String     @unique
   name         String
-  status       String
+  status       String?
   region       AwsRegion
   isWatching   Boolean    @default(false)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   awsAccount   AwsAccount @relation(fields: [awsAccountId], references: [id])
-  awsAccountId String
+  awsAccountId String     @db.Uuid
 
   @@schema("microservice/aws-cloudwatch")
 }
 
 model RdsInstance {
-  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id           String     @id @default(uuid())
   instanceId   String
   name         String
   status       String
@@ -46,7 +46,7 @@ model RdsInstance {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   awsAccount   AwsAccount @relation(fields: [awsAccountId], references: [id])
-  awsAccountId String
+  awsAccountId String     @db.Uuid
 
   @@unique([instanceId, region, awsAccountId])
   @@schema("microservice/aws-cloudwatch")

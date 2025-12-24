@@ -1,34 +1,29 @@
-import {ArrayMinSize, IsArray, IsBooleanString, IsNotEmpty, IsString, IsUUID, ValidateIf} from 'class-validator';
+import {ArrayMinSize, IsArray, IsBoolean, IsNotEmpty, IsString, IsUUID} from 'class-validator';
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger';
 
 export class ListEC2InstancesDto {
   @ApiProperty()
-  @IsNotEmpty()
-  @IsUUID('4')
+  @IsUUID()
   awsAccountId: string;
 
-  @ApiProperty()
-  @ValidateIf(o => o.status !== undefined)
+  @ApiPropertyOptional()
   @IsString()
   status?: string;
 
   @ApiPropertyOptional()
-  @ValidateIf(o => o.isWatching !== undefined)
-  @IsBooleanString()
-  isWatching?: string;
+  @IsBoolean()
+  isWatching?: boolean;
 }
 
 export class FetchEC2InstancesDto {
   @ApiProperty()
-  @IsNotEmpty()
-  @IsUUID('4')
+  @IsUUID()
   awsAccountId: string;
 }
 
 export class SyncEC2InstancesWatchDto {
   @ApiProperty({type: String})
-  @IsNotEmpty()
-  @IsUUID('4')
+  @IsUUID()
   awsAccountId: string;
 
   @ApiProperty({type: [String], minLength: 0})
