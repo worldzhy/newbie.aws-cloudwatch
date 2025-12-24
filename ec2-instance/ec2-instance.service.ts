@@ -2,11 +2,6 @@ import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {DescribeInstancesCommand, EC2Client} from '@aws-sdk/client-ec2';
 import {Prisma} from '@prisma/client';
-import {
-  FetchEC2InstancesDto,
-  ListEC2InstancesDto,
-  SyncEC2InstancesWatchDto,
-} from '@microservices/aws-cloudwatch/ec2-instance/ec2-instance.dto';
 import {ConfigService} from '@nestjs/config';
 import {decryptString} from '@framework/utilities/crypto.util';
 
@@ -93,10 +88,14 @@ export class EC2InstanceService {
     return true;
   }
 
-  async syncEC2InstancesWatch(data: SyncEC2InstancesWatchDto) {
+  async syncEC2InstancesWatch(params: {
+    awsAccountId: string;
+    watchEC2InstanceIds: string[];
+    unwatchEC2InstanceIds: string[];
+  }) {
+    const {awsAccountId, watchEC2InstanceIds, unwatchEC2InstanceIds} = params;
     let needWatch = false;
     let needUnwatch = false;
-    const {awsAccountId, watchEC2InstanceIds, unwatchEC2InstanceIds} = data;
     if (watchEC2InstanceIds.length) {
       const watchEC2Instances = await this.prisma.ec2Instance.findMany({
         where: {
@@ -172,6 +171,6 @@ export class EC2InstanceService {
 
   async getWatchingInstanceIds(awsAccountId: string) {
     const instances = await this.prisma.ec2Instance.findMany({where: {awsAccountId, isWatching: true}});
-    return instances.map(instances => instances.id);
+    return instances.map(instance => instance.id);
   }
 }

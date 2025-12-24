@@ -38,7 +38,7 @@ model Ec2Instance {
 
 model RdsInstance {
   id           String     @id @default(uuid())
-  instanceId   String
+  instanceId   String     @unique // DbiResourceId
   name         String
   status       String
   region       AwsRegion
@@ -48,7 +48,7 @@ model RdsInstance {
   awsAccount   AwsAccount @relation(fields: [awsAccountId], references: [id])
   awsAccountId String     @db.Uuid
 
-  @@unique([instanceId, region, awsAccountId])
+  @@unique([name, region, awsAccountId])
   @@schema("microservice/aws-cloudwatch")
 }
 

@@ -1,19 +1,27 @@
 import {Body, Controller, Get, Param, Patch, Query} from '@nestjs/common';
 import {RDSInstanceService} from './rds-instance.service';
 import {FetchRDSInstancesDto, ListRDSInstancesDto, SyncRDSInstancesWatchDto} from './rds-instance.dto';
+import {PrismaService} from '@framework/prisma/prisma.service';
 
 @Controller('rdsInstances')
 export class RDSInstanceController {
-  constructor(private readonly rdsInstanceService: RDSInstanceService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly rdsInstanceService: RDSInstanceService
+  ) {}
 
   @Get()
-  async listRDSInstances(@Query() req: ListRDSInstancesDto) {
-    return await this.rdsInstanceService.listRDSInstances(req);
+  async listRDSInstances(@Query() query: ListRDSInstancesDto) {
+    const {awsAccountId, status, isWatching} = query;
+    return await this.prisma.rdsInstance.findMany({
+      where: {awsAccountId, status, isWatching},
+      orderBy: {name: 'asc'},
+    });
   }
 
   @Get('fetch')
   async fetchRDSInstances(@Query() query: FetchRDSInstancesDto) {
-    return await this.rdsInstanceService.fetchRDSInstances(query);
+    return await this.rdsInstanceService.fetchRDSInstances(query.awsAccountId);
   }
 
   @Patch('syncWatch')

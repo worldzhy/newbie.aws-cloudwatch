@@ -1,12 +1,7 @@
 import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {DescribeDBInstancesCommand, RDSClient} from '@aws-sdk/client-rds';
-import {FetchEC2InstancesDto} from '@microservices/aws-cloudwatch/ec2-instance/ec2-instance.dto';
 import {AwsRegion} from '@prisma/client';
-import {
-  ListRDSInstancesDto,
-  SyncRDSInstancesWatchDto,
-} from '@microservices/aws-cloudwatch/rds-instance/rds-instance.dto';
 import {ConfigService} from '@nestjs/config';
 import {decryptString} from '@framework/utilities/crypto.util';
 
@@ -23,22 +18,7 @@ export class RDSInstanceService {
     this.encryptIV = this.configService.get('microservices.cloudwatch.cryptoEncryptIV') as string;
   }
 
-  async listRDSInstances(data: ListRDSInstancesDto) {
-    const {awsAccountId, isWatching} = data;
-    const rdsInstances = await this.prisma.rdsInstance.findMany({
-      where: {
-        awsAccountId,
-        isWatching: isWatching === 'true' || isWatching === '1' ? true : undefined,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-    return rdsInstances;
-  }
-
-  async fetchRDSInstances(data: FetchEC2InstancesDto) {
-    const {awsAccountId} = data;
+  async fetchRDSInstances(awsAccountId: string) {
     const awsAccount = await this.prisma.awsAccount.findUniqueOrThrow({where: {id: awsAccountId}});
     const {accessKeyId, secretAccessKey, regions} = awsAccount;
     const rdsInstances: {
@@ -59,23 +39,21 @@ export class RDSInstanceService {
         },
       });
 
-      const response = await client.send(new DescribeDBInstancesCommand({MaxRecords: 100}));
+      const response = await client.send(new DescribeDBInstancesCommand({MaxRecords: 1000}));
       if (response.DBInstances) {
-        for (const dbInstance of response.DBInstances) {
-          const id = <string>dbInstance.DBInstanceIdentifier;
-
-          let name: string | null = id;
-          if (dbInstance.TagList) {
-            const nameTag = dbInstance.TagList.find(tag => tag.Key === 'Name');
+        for (const instance of response.DBInstances) {
+          let name: string | null = null;
+          if (instance.TagList) {
+            const nameTag = instance.TagList.find(tag => tag.Key === 'Name');
             if (nameTag && nameTag.Value) {
               name = nameTag.Value;
             }
           }
           rdsInstances.push({
-            name,
-            status: dbInstance.DBInstanceStatus!,
+            instanceId: instance.DbiResourceId!,
+            name: instance.DBInstanceIdentifier ?? name ?? instance.DbiResourceId!,
+            status: instance.DBInstanceStatus!,
             region: regions[i],
-            instanceId: id,
             awsAccountId,
           });
         }
@@ -108,13 +86,7 @@ export class RDSInstanceService {
         }
         for (const rdsInstance of rdsInstances) {
           await tx.rdsInstance.upsert({
-            where: {
-              instanceId_region_awsAccountId: {
-                instanceId: rdsInstance.instanceId,
-                region: rdsInstance.region,
-                awsAccountId,
-              },
-            },
+            where: {instanceId: rdsInstance.instanceId},
             update: {
               name: rdsInstance.name,
               status: rdsInstance.status,
@@ -135,18 +107,17 @@ export class RDSInstanceService {
     return true;
   }
 
-  async syncRDSInstancesWatch(data: SyncRDSInstancesWatchDto) {
+  async syncRDSInstancesWatch(params: {
+    awsAccountId: string;
+    watchRDSInstanceIds: string[];
+    unwatchRDSInstanceIds: string[];
+  }) {
+    const {awsAccountId, watchRDSInstanceIds, unwatchRDSInstanceIds} = params;
     let needWatch = false;
     let needUnwatch = false;
-    const {awsAccountId, watchRDSInstanceIds, unwatchRDSInstanceIds} = data;
     if (watchRDSInstanceIds.length) {
       const watchRDSInstances = await this.prisma.rdsInstance.findMany({
-        where: {
-          id: {
-            in: watchRDSInstanceIds,
-          },
-          awsAccountId,
-        },
+        where: {id: {in: watchRDSInstanceIds}, awsAccountId},
       });
       if (watchRDSInstances.length !== watchRDSInstanceIds.length) {
         throw new HttpException('The number of RDS instance IDs to watch does not match', HttpStatus.BAD_REQUEST);
@@ -155,12 +126,7 @@ export class RDSInstanceService {
     }
     if (unwatchRDSInstanceIds.length) {
       const unwatchRDSInstances = await this.prisma.rdsInstance.findMany({
-        where: {
-          id: {
-            in: unwatchRDSInstanceIds,
-          },
-          awsAccountId,
-        },
+        where: {id: {in: unwatchRDSInstanceIds}, awsAccountId},
       });
       if (unwatchRDSInstances.length !== unwatchRDSInstanceIds.length) {
         throw new HttpException('The number of RDS instance IDs to unwatch does not match', HttpStatus.BAD_REQUEST);
@@ -171,65 +137,32 @@ export class RDSInstanceService {
     if (needWatch || needUnwatch) {
       await this.prisma.$transaction(async tx => {
         if (needWatch) {
-          await tx.rdsInstance.updateMany({
-            where: {
-              id: {
-                in: watchRDSInstanceIds,
-              },
-            },
-            data: {
-              isWatching: true,
-            },
-          });
+          await tx.rdsInstance.updateMany({where: {id: {in: watchRDSInstanceIds}}, data: {isWatching: true}});
         }
         if (needUnwatch) {
           await tx.rdsInstance.updateMany({
-            where: {
-              id: {
-                in: unwatchRDSInstanceIds,
-              },
-            },
-            data: {
-              isWatching: false,
-            },
+            where: {id: {in: unwatchRDSInstanceIds}},
+            data: {isWatching: false},
           });
         }
       });
     }
-    return true;
   }
 
-  async watchRDSInstance(rdsInstanceId: string) {
-    const rdsInstance = await this.prisma.rdsInstance.findUniqueOrThrow({
-      where: {
-        id: rdsInstanceId,
-      },
-    });
-    await this.prisma.rdsInstance.update({
-      where: {
-        id: rdsInstance.id,
-      },
-      data: {
-        isWatching: true,
-      },
-    });
-    return true;
+  async watchRDSInstance(id: string) {
+    return await this.prisma.rdsInstance.update({where: {id}, data: {isWatching: true}});
   }
 
-  async unwatchRDSInstance(rdsInstanceId: string) {
-    const rdsInstance = await this.prisma.rdsInstance.findUniqueOrThrow({
-      where: {
-        id: rdsInstanceId,
-      },
-    });
-    await this.prisma.rdsInstance.update({
-      where: {
-        id: rdsInstance.id,
-      },
-      data: {
-        isWatching: false,
-      },
-    });
-    return true;
+  async unwatchRDSInstance(id: string) {
+    return await this.prisma.rdsInstance.update({where: {id}, data: {isWatching: false}});
+  }
+
+  async getWatchingInstances(awsAccountId: string) {
+    return await this.prisma.rdsInstance.findMany({where: {awsAccountId, isWatching: true}});
+  }
+
+  async getWatchingInstanceIds(awsAccountId: string) {
+    const instances = await this.prisma.rdsInstance.findMany({where: {awsAccountId, isWatching: true}});
+    return instances.map(instance => instance.id);
   }
 }
