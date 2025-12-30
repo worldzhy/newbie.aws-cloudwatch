@@ -86,7 +86,13 @@ export class RDSInstanceService {
         }
         for (const rdsInstance of rdsInstances) {
           await tx.rdsInstance.upsert({
-            where: {instanceId: rdsInstance.instanceId},
+            where: {
+              name_region_awsAccountId: {
+                name: rdsInstance.name,
+                region: rdsInstance.region,
+                awsAccountId,
+              },
+            },
             update: {
               name: rdsInstance.name,
               status: rdsInstance.status,
