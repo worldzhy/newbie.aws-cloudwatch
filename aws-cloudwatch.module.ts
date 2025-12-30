@@ -1,17 +1,25 @@
 import {Global, Module} from '@nestjs/common';
 import {AwsCloudwatchService} from '@microservices/aws-cloudwatch/aws-cloudwatch.service';
 import {AWSAccountController} from '@microservices/aws-cloudwatch/aws-account/aws-account.controller';
-import {MetricController} from '@microservices/aws-cloudwatch/metric/metric.controller';
-import {MetricService} from '@microservices/aws-cloudwatch/metric/metric.service';
-import {EC2InstanceController} from './ec2-instance/ec2-instance.controller';
-import {EC2InstanceService} from './ec2-instance/ec2-instance.service';
-import {RDSInstanceController} from './rds-instance/rds-instance.controller';
-import {RDSInstanceService} from './rds-instance/rds-instance.service';
+import {Ec2InstanceController} from './ec2-instance/ec2-instance.controller';
+import {Ec2InstanceService} from './ec2-instance/ec2-instance.service';
+import {Ec2MetricController} from './ec2-instance/ec2-metric.controller';
+import {Ec2MetricService} from './ec2-instance/ec2-metric.service';
+import {RdsInstanceController} from './rds-instance/rds-instance.controller';
+import {RdsInstanceService} from './rds-instance/rds-instance.service';
+import {RdsMetricController} from './rds-instance/rds-metric.controller';
+import {RdsMetricService} from './rds-instance/rds-metric.service';
 
 @Global()
 @Module({
-  controllers: [AWSAccountController, MetricController, EC2InstanceController, RDSInstanceController],
-  providers: [AwsCloudwatchService, MetricService, EC2InstanceService, RDSInstanceService],
-  exports: [AwsCloudwatchService, MetricService, EC2InstanceService, RDSInstanceService],
+  controllers: [
+    AWSAccountController,
+    Ec2InstanceController,
+    Ec2MetricController,
+    RdsInstanceController,
+    RdsMetricController,
+  ],
+  providers: [AwsCloudwatchService, Ec2InstanceService, Ec2MetricService, RdsInstanceService, RdsMetricService],
+  exports: [AwsCloudwatchService, Ec2InstanceService, Ec2MetricService, RdsInstanceService, RdsMetricService],
 })
 export class AwsCloudwatchModule {}

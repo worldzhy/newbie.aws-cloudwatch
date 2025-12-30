@@ -4,15 +4,20 @@ import {DescribeDBInstancesCommand, RDSClient} from '@aws-sdk/client-rds';
 import {AwsRegion} from '@prisma/client';
 import {ConfigService} from '@nestjs/config';
 import {decryptString} from '@framework/utilities/crypto.util';
+import {GetWatchedRDSInstancesMetricDto} from './rds-instance.dto';
+import {GetRDSInstancesMetricParams, MetricData} from '../aws-cloudwatch.interface';
+import dayjs from 'dayjs';
+import {AwsCloudwatchService} from '../aws-cloudwatch.service';
 
 @Injectable()
-export class RDSInstanceService {
+export class RdsInstanceService {
   private readonly encryptKey: string;
   private readonly encryptIV: string;
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly cloudwatchService: AwsCloudwatchService
   ) {
     this.encryptKey = this.configService.get('microservices.cloudwatch.cryptoEncryptKey') as string;
     this.encryptIV = this.configService.get('microservices.cloudwatch.cryptoEncryptIV') as string;
@@ -62,27 +67,13 @@ export class RDSInstanceService {
 
     if (rdsInstances.length) {
       await this.prisma.$transaction(async tx => {
-        const currentRemoteIdObjs = await tx.rdsInstance.findMany({
-          where: {
-            awsAccountId,
-          },
-          select: {
-            instanceId: true,
-          },
-        });
+        const currentRemoteIdObjs = await tx.rdsInstance.findMany({where: {awsAccountId}, select: {instanceId: true}});
         const rdsInstanceRemoteIds = rdsInstances.map(item => item.instanceId);
         const deleteIds = currentRemoteIdObjs
           .filter(item => !rdsInstanceRemoteIds.includes(item.instanceId))
           .map(item => item.instanceId);
         if (deleteIds.length) {
-          await tx.rdsInstance.deleteMany({
-            where: {
-              awsAccountId,
-              instanceId: {
-                in: deleteIds,
-              },
-            },
-          });
+          await tx.rdsInstance.deleteMany({where: {awsAccountId, instanceId: {in: deleteIds}}});
         }
         for (const rdsInstance of rdsInstances) {
           await tx.rdsInstance.upsert({
@@ -164,5 +155,52 @@ export class RDSInstanceService {
   async getWatchingInstanceIds(awsAccountId: string) {
     const instances = await this.prisma.rdsInstance.findMany({where: {awsAccountId, isWatching: true}});
     return instances.map(instance => instance.id);
+  }
+
+  async getWatchedInstancesMetric(data: GetWatchedRDSInstancesMetricDto) {
+    const {awsAccountId, startTime, endTime, period, metricName, statistics} = data;
+    const awsAccount = await this.prisma.awsAccount.findUnique({
+      where: {id: awsAccountId},
+      include: {rdsInstances: {where: {isWatching: true}, orderBy: {createdAt: 'asc'}}},
+    });
+    if (!awsAccount) {
+      throw new HttpException('AWS Account not found', HttpStatus.BAD_REQUEST);
+    }
+    const {rdsInstances} = awsAccount;
+    if (!rdsInstances.length) {
+      return [];
+    }
+
+    // Check that the period is greater than 60 and divisible by 60.
+    if (period < 60) throw new HttpException('Period must be no less than 60', HttpStatus.BAD_REQUEST);
+    if (period % 60 !== 0) {
+      throw new HttpException('The period must be a multiple of 60', HttpStatus.BAD_REQUEST);
+    }
+    // Check if start time and end time are valid.
+    if (!dayjs(startTime).isValid()) {
+      throw new HttpException('Invalid start time', HttpStatus.BAD_REQUEST);
+    }
+    if (!dayjs(endTime).isValid()) {
+      throw new HttpException('Invalid end time', HttpStatus.BAD_REQUEST);
+    }
+
+    const results: MetricData[] = [];
+    for (const region of awsAccount.regions) {
+      const params: GetRDSInstancesMetricParams = {
+        rdsInstanceRemoteIds: rdsInstances.filter(item => item.region === region).map(item => item.instanceId),
+        region: region.replaceAll('_', '-'),
+        startTime: dayjs(startTime).toDate(),
+        endTime: dayjs(endTime).toDate(),
+        period: period,
+        metricName,
+        statistics,
+        accessKeyId: awsAccount.accessKeyId,
+        secretAccessKey: decryptString(awsAccount.secretAccessKey, this.encryptKey, this.encryptIV),
+      };
+      const metricData = await this.cloudwatchService.getRDSInstancesMetric(params);
+      results.push(...metricData);
+    }
+
+    return results;
   }
 }

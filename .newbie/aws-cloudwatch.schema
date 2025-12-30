@@ -39,7 +39,7 @@ model Ec2Instance {
 model RdsInstance {
   id           String     @id @default(uuid())
   instanceId   String     @unique // DbiResourceId
-  name         String
+  name         String // DBInstanceIdentifier
   status       String
   region       AwsRegion
   isWatching   Boolean    @default(false)

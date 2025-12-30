@@ -1,67 +1,49 @@
 import {Injectable} from '@nestjs/common';
-import {CloudWatchClient, GetMetricDataCommand} from '@aws-sdk/client-cloudwatch';
-import {ConfigService} from '@nestjs/config';
-import {GetEC2InstancesCPUMetricParams, GetRDSInstancesMetricParams} from './aws-cloudwatch.interface';
-
-const CryptoJS = require('crypto-js');
+import {CloudWatchClient, GetMetricDataCommand, GetMetricDataCommandOutput} from '@aws-sdk/client-cloudwatch';
+import {GetEC2InstancesCPUMetricParams, GetRDSInstancesMetricParams, MetricData} from './aws-cloudwatch.interface';
 
 @Injectable()
 export class AwsCloudwatchService {
-  constructor(private readonly configService: ConfigService) {}
+  constructor() {}
 
   private initCloudwatchClient(args: {accessKeyId?: string; secretAccessKey?: string; region: string}) {
     const {accessKeyId, secretAccessKey, region} = args;
     let client: CloudWatchClient;
     if (accessKeyId && secretAccessKey) {
-      client = new CloudWatchClient({
-        region,
-        credentials: {
-          accessKeyId,
-          secretAccessKey,
-        },
-      });
+      client = new CloudWatchClient({region, credentials: {accessKeyId, secretAccessKey}});
     } else {
-      client = new CloudWatchClient({
-        region,
-      });
+      client = new CloudWatchClient({region});
     }
     return client;
   }
 
   async getEC2InstancesCPUMetric(params: GetEC2InstancesCPUMetricParams) {
     const {ec2InstanceRemoteIds, accessKeyId, secretAccessKey, region, startTime, endTime, period, statistics} = params;
-    const cloudwatchClient = this.initCloudwatchClient({
-      accessKeyId,
-      secretAccessKey,
-      region,
-    });
-    if (ec2InstanceRemoteIds.length) {
-      const queries = ec2InstanceRemoteIds.map((id, idx) => ({
+    const cloudwatchClient = this.initCloudwatchClient({accessKeyId, secretAccessKey, region});
+    if (ec2InstanceRemoteIds.length === 0) {
+      return [];
+    }
+
+    const command = new GetMetricDataCommand({
+      StartTime: startTime,
+      EndTime: endTime,
+      MetricDataQueries: ec2InstanceRemoteIds.map((id, idx) => ({
         Id: `cpu${idx}`,
         MetricStat: {
           Metric: {
             Namespace: 'AWS/EC2',
             MetricName: 'CPUUtilization',
-            Dimensions: [
-              {
-                Name: 'InstanceId',
-                Value: id,
-              },
-            ],
+            Dimensions: [{Name: 'InstanceId', Value: id}],
           },
           Period: period,
           Stat: statistics,
         },
         ReturnData: true,
-      }));
-      const command = new GetMetricDataCommand({
-        StartTime: startTime,
-        EndTime: endTime,
-        MetricDataQueries: queries,
-      });
-      return await cloudwatchClient.send(command);
-    }
-    return null;
+      })),
+    });
+
+    const metricData = await cloudwatchClient.send(command);
+    return this.parseGetMetricDataCommandOutput(metricData);
   }
 
   async getRDSInstancesMetric(params: GetRDSInstancesMetricParams) {
@@ -69,20 +51,22 @@ export class AwsCloudwatchService {
       rdsInstanceRemoteIds,
       accessKeyId,
       secretAccessKey,
-      metricName,
       region,
+      metricName,
       startTime,
       endTime,
       period,
       statistics,
     } = params;
-    const cloudwatchClient = this.initCloudwatchClient({
-      accessKeyId,
-      secretAccessKey,
-      region,
-    });
-    if (rdsInstanceRemoteIds.length) {
-      const queries = rdsInstanceRemoteIds.map((id, index) => ({
+    const cloudwatchClient = this.initCloudwatchClient({accessKeyId, secretAccessKey, region});
+    if (rdsInstanceRemoteIds.length === 0) {
+      return [];
+    }
+
+    const command = new GetMetricDataCommand({
+      StartTime: startTime,
+      EndTime: endTime,
+      MetricDataQueries: rdsInstanceRemoteIds.map((id, index) => ({
         Id: `q${index}`,
         MetricStat: {
           Metric: {
@@ -93,14 +77,34 @@ export class AwsCloudwatchService {
           Period: period,
           Stat: statistics,
         },
-      }));
-      const command = new GetMetricDataCommand({
-        StartTime: startTime,
-        EndTime: endTime,
-        MetricDataQueries: queries,
-      });
-      return await cloudwatchClient.send(command);
+      })),
+    });
+
+    const metricData = await cloudwatchClient.send(command);
+    return this.parseGetMetricDataCommandOutput(metricData);
+  }
+
+  private parseGetMetricDataCommandOutput(output: GetMetricDataCommandOutput) {
+    // const results: (MetricDataResult | {DataPoints: {timestamp: Date; value: number}[]})[] = [];
+    const results: MetricData[] = [];
+
+    if (output.MetricDataResults) {
+      for (const result of output.MetricDataResults) {
+        const dataPoints: {timestamp: Date; value: number}[] = [];
+        if (result.Timestamps && result.Values) {
+          dataPoints.push(
+            ...result.Timestamps.map((t, i) => ({
+              timestamp: new Date(t),
+              value: result.Values![i],
+            }))
+          );
+          dataPoints.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        }
+
+        results.push({...result, DataPoints: dataPoints});
+      }
     }
-    return null;
+
+    return results;
   }
 }

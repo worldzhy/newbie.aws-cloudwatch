@@ -1,13 +1,13 @@
 import {Body, Controller, Get, Param, Patch, Query} from '@nestjs/common';
-import {EC2InstanceService} from './ec2-instance.service';
-import {FetchEC2InstancesDto, ListEC2InstancesDto, SyncEC2InstancesWatchDto} from './ec2-instance.dto';
 import {PrismaService} from '@framework/prisma/prisma.service';
+import {Ec2InstanceService} from './ec2-instance.service';
+import {FetchEC2InstancesDto, ListEC2InstancesDto, SyncEC2InstancesWatchDto} from './ec2-instance.dto';
 
-@Controller('ec2Instances')
-export class EC2InstanceController {
+@Controller('ec2-instances')
+export class Ec2InstanceController {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly ec2InstanceService: EC2InstanceService
+    private readonly ec2InstanceService: Ec2InstanceService
   ) {}
 
   @Get()

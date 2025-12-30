@@ -6,7 +6,7 @@ import {ConfigService} from '@nestjs/config';
 import {decryptString} from '@framework/utilities/crypto.util';
 
 @Injectable()
-export class EC2InstanceService {
+export class Ec2InstanceService {
   private readonly encryptKey: string;
   private readonly encryptIV: string;
 
@@ -98,12 +98,7 @@ export class EC2InstanceService {
     let needUnwatch = false;
     if (watchEC2InstanceIds.length) {
       const watchEC2Instances = await this.prisma.ec2Instance.findMany({
-        where: {
-          id: {
-            in: watchEC2InstanceIds,
-          },
-          awsAccountId,
-        },
+        where: {id: {in: watchEC2InstanceIds}, awsAccountId},
       });
       if (watchEC2Instances.length !== watchEC2InstanceIds.length) {
         throw new HttpException('The number of EC2 instance IDs to watch does not match', HttpStatus.BAD_REQUEST);
@@ -112,12 +107,7 @@ export class EC2InstanceService {
     }
     if (unwatchEC2InstanceIds.length) {
       const unwatchEC2Instances = await this.prisma.ec2Instance.findMany({
-        where: {
-          id: {
-            in: unwatchEC2InstanceIds,
-          },
-          awsAccountId,
-        },
+        where: {id: {in: unwatchEC2InstanceIds}, awsAccountId},
       });
       if (unwatchEC2Instances.length !== unwatchEC2InstanceIds.length) {
         throw new HttpException('The number of EC2 instance IDs to unwatch does not match', HttpStatus.BAD_REQUEST);
@@ -128,28 +118,10 @@ export class EC2InstanceService {
     if (needWatch || needUnwatch) {
       await this.prisma.$transaction(async tx => {
         if (needWatch) {
-          await tx.ec2Instance.updateMany({
-            where: {
-              id: {
-                in: watchEC2InstanceIds,
-              },
-            },
-            data: {
-              isWatching: true,
-            },
-          });
+          await tx.ec2Instance.updateMany({where: {id: {in: watchEC2InstanceIds}}, data: {isWatching: true}});
         }
         if (needUnwatch) {
-          await tx.ec2Instance.updateMany({
-            where: {
-              id: {
-                in: unwatchEC2InstanceIds,
-              },
-            },
-            data: {
-              isWatching: false,
-            },
-          });
+          await tx.ec2Instance.updateMany({where: {id: {in: unwatchEC2InstanceIds}}, data: {isWatching: false}});
         }
       });
     }

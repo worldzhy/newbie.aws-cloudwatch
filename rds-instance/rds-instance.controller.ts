@@ -1,13 +1,13 @@
 import {Body, Controller, Get, Param, Patch, Query} from '@nestjs/common';
-import {RDSInstanceService} from './rds-instance.service';
-import {FetchRDSInstancesDto, ListRDSInstancesDto, SyncRDSInstancesWatchDto} from './rds-instance.dto';
 import {PrismaService} from '@framework/prisma/prisma.service';
+import {RdsInstanceService} from './rds-instance.service';
+import {FetchRDSInstancesDto, ListRDSInstancesDto, SyncRDSInstancesWatchDto} from './rds-instance.dto';
 
-@Controller('rdsInstances')
-export class RDSInstanceController {
+@Controller('rds-instances')
+export class RdsInstanceController {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly rdsInstanceService: RDSInstanceService
+    private readonly rdsInstanceService: RdsInstanceService
   ) {}
 
   @Get()
