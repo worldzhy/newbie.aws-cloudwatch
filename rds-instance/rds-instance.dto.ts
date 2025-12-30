@@ -7,7 +7,7 @@ export class ListRDSInstancesDto {
   @IsUUID()
   awsAccountId: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
   status?: string;
 
