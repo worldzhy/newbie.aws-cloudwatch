@@ -1,13 +1,13 @@
 {
   "config-service": {
     "cloudwatch": {
-      "cryptoEncryptKey": "process.env.CLOUDWATCH_CRYPTO_ENCRYPT_KEY",
-      "cryptoEncryptIV": "process.env.CLOUDWATCH_CRYPTO_ENCRYPT_IV"
+      "cryptoEncryptKey": "process.env.AWS_CLOUDWATCH_CRYPTO_ENCRYPT_KEY",
+      "cryptoEncryptIV": "process.env.AWS_CLOUDWATCH_CRYPTO_ENCRYPT_IV"
     }
   },
   "env": {
-    "CLOUDWATCH_CRYPTO_ENCRYPT_KEY": "",
-    "CLOUDWATCH_CRYPTO_ENCRYPT_IV": ""
+    "AWS_CLOUDWATCH_CRYPTO_ENCRYPT_KEY": "",
+    "AWS_CLOUDWATCH_CRYPTO_ENCRYPT_IV": ""
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch": "^3.940.0",
