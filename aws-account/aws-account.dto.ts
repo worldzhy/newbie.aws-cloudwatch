@@ -6,7 +6,7 @@ export class CreateAWSAccountDto {
   @ApiProperty({type: String, required: true})
   @IsNotEmpty()
   @IsString()
-  awsAccountIdentifier: string;
+  awsAccountId: string;
 
   @ApiProperty({type: String})
   @IsNotEmpty()
@@ -38,7 +38,7 @@ export class UpdateAWSAccountDto {
   @ApiProperty({type: String, required: false})
   @IsNotEmpty()
   @IsString()
-  awsAccountIdentifier?: string;
+  awsAccountId?: string;
 
   @ApiPropertyOptional({type: String})
   @ValidateIf(o => o.iamUserName !== undefined)
