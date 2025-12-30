@@ -19,7 +19,12 @@ export class RdsInstanceService {
   }
 
   async fetchRDSInstances(awsAccountId: string) {
-    const awsAccount = await this.prisma.awsAccount.findUniqueOrThrow({where: {id: awsAccountId}});
+    const awsAccount = await this.prisma.awsAccount.findUniqueOrThrow({
+      where: {id: awsAccountId},
+      omit: {
+        secretAccessKey: false,
+      },
+    });
     const {accessKeyId, secretAccessKey, regions} = awsAccount;
     const rdsInstances: {
       instanceId: string;

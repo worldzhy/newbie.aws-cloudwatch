@@ -1,6 +1,18 @@
-import {ArrayMinSize, IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsString, IsUUID} from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger';
 import {CloudwatchMetricStatistics} from '../aws-cloudwatch.enum';
+import {Transform} from 'class-transformer';
+import {BooleanTransformer} from '@framework/transformers/boolean.transformer';
 
 export class ListEC2InstancesDto {
   @ApiProperty()
@@ -8,11 +20,14 @@ export class ListEC2InstancesDto {
   awsAccountId: string;
 
   @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   status?: string;
 
   @ApiPropertyOptional()
+  @IsOptional()
   @IsBoolean()
+  @Transform(BooleanTransformer)
   isWatching?: boolean;
 }
 

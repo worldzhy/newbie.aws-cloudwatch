@@ -19,7 +19,12 @@ export class Ec2InstanceService {
   }
 
   async fetchEC2Instances(awsAccountId: string) {
-    const awsAccount = await this.prisma.awsAccount.findUniqueOrThrow({where: {id: awsAccountId}});
+    const awsAccount = await this.prisma.awsAccount.findUniqueOrThrow({
+      where: {id: awsAccountId},
+      omit: {
+        secretAccessKey: false,
+      },
+    });
     const {accessKeyId, secretAccessKey, regions} = awsAccount;
     const ec2InstanceCreateManyInputs: Prisma.Ec2InstanceCreateManyInput[] = [];
 
