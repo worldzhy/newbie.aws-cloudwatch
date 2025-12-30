@@ -39,7 +39,7 @@ export class RdsInstanceService {
         },
       });
 
-      const response = await client.send(new DescribeDBInstancesCommand({MaxRecords: 1000}));
+      const response = await client.send(new DescribeDBInstancesCommand());
       if (response.DBInstances) {
         for (const instance of response.DBInstances) {
           let name: string | null = null;

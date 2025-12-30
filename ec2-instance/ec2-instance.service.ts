@@ -33,7 +33,7 @@ export class Ec2InstanceService {
         },
       });
 
-      const response = await client.send(new DescribeInstancesCommand({MaxResults: 1000}));
+      const response = await client.send(new DescribeInstancesCommand());
       if (response.Reservations) {
         for (const reservation of response.Reservations) {
           if (reservation.Instances) {
