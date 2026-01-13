@@ -1,7 +1,7 @@
 import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {DescribeDBInstancesCommand, RDSClient} from '@aws-sdk/client-rds';
-import {AwsRegion} from '@prisma/client';
+import {AwsRegion} from '@generated/prisma/client';
 import {ConfigService} from '@nestjs/config';
 import {decryptString} from '@framework/utilities/crypto.util';
 

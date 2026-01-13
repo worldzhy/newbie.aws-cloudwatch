@@ -1,7 +1,7 @@
 import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {DescribeInstancesCommand, EC2Client} from '@aws-sdk/client-ec2';
-import {Prisma} from '@prisma/client';
+import {Prisma} from '@generated/prisma/client';
 import {ConfigService} from '@nestjs/config';
 import {decryptString} from '@framework/utilities/crypto.util';
 
