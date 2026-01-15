@@ -10,10 +10,10 @@
     "AWS_CLOUDWATCH_CRYPTO_ENCRYPT_IV": ""
   },
   "dependencies": {
-    "@aws-sdk/client-cloudwatch": "^3.940.0",
-    "@aws-sdk/client-ec2": "^3.940.0",
-    "@aws-sdk/client-rds": "^3.940.0",
-    "dayjs": "^1.11.19"
+    "@aws-sdk/client-cloudwatch": "latest",
+    "@aws-sdk/client-ec2": "latest",
+    "@aws-sdk/client-rds": "latest",
+    "dayjs": "latest"
   },
   "devDependencies": {}
 }
