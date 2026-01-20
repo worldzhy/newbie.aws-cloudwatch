@@ -7,7 +7,7 @@
 // * ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ ⌄ //
 
 model AwsAccount {
-  id              String        @id @default(uuid())
+  id              String        @id @default(uuid()) @db.Uuid
   awsAccountId    String        @unique
   iamUserName     String
   accessKeyId     String        @unique
@@ -22,7 +22,7 @@ model AwsAccount {
 }
 
 model Ec2Instance {
-  id           String     @id @default(uuid())
+  id           String     @id @default(uuid()) @db.Uuid
   instanceId   String     @unique
   name         String
   status       String?
@@ -37,7 +37,7 @@ model Ec2Instance {
 }
 
 model RdsInstance {
-  id           String     @id @default(uuid())
+  id           String     @id @default(uuid()) @db.Uuid
   instanceId   String     @unique // DbiResourceId
   name         String // DBInstanceIdentifier
   status       String
