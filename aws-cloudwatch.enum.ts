@@ -12,4 +12,6 @@ export enum CloudwatchMetricRDSMetricName {
 export enum AWSRegion {
   US_EAST_1 = 'us_east_1',
   US_EAST_2 = 'us_east_2',
+  CN_NORTH_1 = 'cn_north_1',
+  CN_NORTHWEST_1 = 'cn_northwest_1',
 }
