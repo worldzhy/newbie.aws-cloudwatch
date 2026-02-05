@@ -59,7 +59,7 @@ export class RdsMetricService {
     const results: MetricData[] = [];
     for (const region of awsAccount.regions) {
       const params: GetRDSInstancesMetricParams = {
-        rdsInstanceRemoteIds: rdsInstances.filter(item => item.region === region).map(item => item.instanceId),
+        rdsInstanceRemoteIds: rdsInstances.filter(item => item.region === region).map(item => item.name),
         region: region.replaceAll('_', '-'),
         startTime: dayjs(startTime).toDate(),
         endTime: dayjs(endTime).toDate(),
