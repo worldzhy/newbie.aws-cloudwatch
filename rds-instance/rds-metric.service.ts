@@ -1,9 +1,16 @@
-import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {ConfigService} from '@nestjs/config';
 import {decryptString} from '@framework/utilities/crypto.util';
 import {GetWatchedRDSInstancesMetricDto} from './rds-instance.dto';
-import {GetRDSInstancesMetricParams, MetricData} from '../aws-cloudwatch.interface';
+import {
+  GetRDSInstancesMetricParams,
+  MetricData,
+} from '../aws-cloudwatch.interface';
 import {AwsCloudwatchService} from '../aws-cloudwatch.service';
 import dayjs from 'dayjs';
 
@@ -15,7 +22,7 @@ export class RdsMetricService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
-    private readonly cloudwatchService: AwsCloudwatchService
+    private readonly cloudwatchService: AwsCloudwatchService,
   ) {
     this.encryptKey = this.configService.get('microservices.cloudwatch.cryptoEncryptKey') as string;
     this.encryptIV = this.configService.get('microservices.cloudwatch.cryptoEncryptIV') as string;
@@ -35,9 +42,10 @@ export class RdsMetricService {
       return [];
     }
 
+    const periodNum = Number(period);
     // Check that the period is greater than 60 and divisible by 60.
-    if (period < 60) throw new HttpException('Period must be no less than 60', HttpStatus.BAD_REQUEST);
-    if (period % 60 !== 0) {
+    if (periodNum < 60) throw new HttpException('Period must be no less than 60', HttpStatus.BAD_REQUEST);
+    if (periodNum % 60 !== 0) {
       throw new HttpException('The period must be a multiple of 60', HttpStatus.BAD_REQUEST);
     }
     // Check if start time and end time are valid.
@@ -55,7 +63,7 @@ export class RdsMetricService {
         region: region.replaceAll('_', '-'),
         startTime: dayjs(startTime).toDate(),
         endTime: dayjs(endTime).toDate(),
-        period: period,
+        period: periodNum,
         metricName,
         statistics,
         accessKeyId: awsAccount.accessKeyId,

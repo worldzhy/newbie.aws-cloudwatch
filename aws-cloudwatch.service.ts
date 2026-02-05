@@ -1,10 +1,19 @@
 import {Injectable} from '@nestjs/common';
-import {CloudWatchClient, GetMetricDataCommand, GetMetricDataCommandOutput} from '@aws-sdk/client-cloudwatch';
-import {GetEC2InstancesCPUMetricParams, GetRDSInstancesMetricParams, MetricData} from './aws-cloudwatch.interface';
+import {
+  CloudWatchClient,
+  GetMetricDataCommand,
+  GetMetricDataCommandOutput,
+} from '@aws-sdk/client-cloudwatch';
+import {
+  GetEC2InstancesCPUMetricParams,
+  GetRDSInstancesMetricParams,
+  MetricData,
+} from './aws-cloudwatch.interface';
 
 @Injectable()
 export class AwsCloudwatchService {
-  constructor() {}
+  constructor() {
+  }
 
   private initCloudwatchClient(args: {accessKeyId?: string; secretAccessKey?: string; region: string}) {
     const {accessKeyId, secretAccessKey, region} = args;
@@ -96,7 +105,7 @@ export class AwsCloudwatchService {
             ...result.Timestamps.map((t, i) => ({
               timestamp: new Date(t),
               value: result.Values![i],
-            }))
+            })),
           );
           dataPoints.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
         }

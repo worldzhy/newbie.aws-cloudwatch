@@ -4,13 +4,19 @@ import {
   IsBoolean,
   IsEnum,
   IsNotEmpty,
-  IsNumber,
+  IsNumberString,
   IsOptional,
   IsString,
   IsUUID,
 } from 'class-validator';
-import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger';
-import {CloudwatchMetricRDSMetricName, CloudwatchMetricStatistics} from '../aws-cloudwatch.enum';
+import {
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
+import {
+  CloudwatchMetricRDSMetricName,
+  CloudwatchMetricStatistics,
+} from '../aws-cloudwatch.enum';
 import {Transform} from 'class-transformer';
 import {BooleanTransformer} from '@framework/transformers/boolean.transformer';
 
@@ -74,9 +80,9 @@ export class GetWatchedRDSInstancesMetricDto {
   @IsNotEmpty()
   endTime: string;
 
-  @ApiProperty({type: Number, description: 'The period must be a multiple of 60'})
-  @IsNumber()
-  period: number;
+  @ApiProperty({description: 'The period must be a multiple of 60'})
+  @IsNumberString()
+  period: string;
 
   @ApiProperty({enum: CloudwatchMetricStatistics})
   @IsNotEmpty()

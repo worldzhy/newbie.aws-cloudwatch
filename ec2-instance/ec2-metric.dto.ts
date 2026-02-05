@@ -1,4 +1,9 @@
-import {IsEnum, IsNotEmpty, IsNumber, IsUUID} from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsNumberString,
+  IsUUID,
+} from 'class-validator';
 import {ApiProperty} from '@nestjs/swagger';
 import {CloudwatchMetricStatistics} from '../aws-cloudwatch.enum';
 
@@ -16,9 +21,9 @@ export class GetWatchedEC2InstancesCPUMetricDto {
   @IsNotEmpty()
   endTime: string;
 
-  @ApiProperty({type: Number, description: 'The period must be a multiple of 60'})
-  @IsNumber()
-  period: number;
+  @ApiProperty({description: 'The period must be a multiple of 60'})
+  @IsNumberString()
+  period: string;
 
   @ApiProperty({enum: CloudwatchMetricStatistics})
   @IsNotEmpty()
