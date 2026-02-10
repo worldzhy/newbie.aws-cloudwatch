@@ -3,12 +3,14 @@ import {
   CloudWatchClient,
   GetMetricDataCommand,
   GetMetricDataCommandOutput,
+  ListMetricsCommand,
 } from '@aws-sdk/client-cloudwatch';
 import {
   GetEC2InstancesCPUMetricParams,
   GetRDSInstancesMetricParams,
   MetricData,
 } from './aws-cloudwatch.interface';
+import {CloudwatchEC2MetricName} from '@microservices/aws-cloudwatch/aws-cloudwatch.enum';
 
 @Injectable()
 export class AwsCloudwatchService {
@@ -26,29 +28,94 @@ export class AwsCloudwatchService {
     return client;
   }
 
-  async getEC2InstancesCPUMetric(params: GetEC2InstancesCPUMetricParams) {
-    const {ec2InstanceRemoteIds, accessKeyId, secretAccessKey, region, startTime, endTime, period, statistics} = params;
+  async getEC2InstancesMetric(params: GetEC2InstancesCPUMetricParams) {
+    const {
+      ec2InstanceRemoteIds, metricName, accessKeyId, secretAccessKey, region, startTime, endTime, period, statistics,
+    } = params;
     const cloudwatchClient = this.initCloudwatchClient({accessKeyId, secretAccessKey, region});
     if (ec2InstanceRemoteIds.length === 0) {
       return [];
     }
 
-    const command = new GetMetricDataCommand({
-      StartTime: startTime,
-      EndTime: endTime,
-      MetricDataQueries: ec2InstanceRemoteIds.map((id, idx) => ({
-        Id: `cpu${idx}`,
-        MetricStat: {
+    const metricQueries: any[] = [];
+
+    if (metricName === CloudwatchEC2MetricName.CPU_UTILIZATION) {
+      ec2InstanceRemoteIds.forEach(remoteId => {
+        metricQueries.push({
           Metric: {
             Namespace: 'AWS/EC2',
-            MetricName: 'CPUUtilization',
-            Dimensions: [{Name: 'InstanceId', Value: id}],
+            MetricName: metricName,
+            Dimensions: [
+              {Name: 'InstanceId', Value: remoteId},
+            ],
           },
           Period: period,
           Stat: statistics,
-        },
-        ReturnData: true,
-      })),
+        });
+      });
+    }
+
+    if (metricName === CloudwatchEC2MetricName.DISK_USED_PERCENT) {
+      // We need to list every ec2 instance metrics as well.
+      for (const remoteId of ec2InstanceRemoteIds) {
+        const listMetricsCommand = new ListMetricsCommand({
+          Namespace: 'CWAgent',
+          MetricName: metricName,
+          Dimensions: [
+            {Name: 'InstanceId', Value: remoteId},
+            {Name: 'path', Value: '/'},
+          ],
+        });
+        const listRes = await cloudwatchClient.send(listMetricsCommand);
+        if (listRes && listRes.Metrics && listRes.Metrics.length > 0) {
+          metricQueries.push({
+            Metric: {...listRes.Metrics[0]},
+            Period: period,
+            Stat: statistics,
+          });
+        }
+      }
+    }
+
+    if (metricName === CloudwatchEC2MetricName.MEM_USED__PERCENT) {
+      // We need to list every ec2 instance metrics as well.
+      for (const remoteId of ec2InstanceRemoteIds) {
+        const listMetricsCommand = new ListMetricsCommand({
+          Namespace: 'CWAgent',
+          MetricName: metricName,
+          Dimensions: [
+            {Name: 'InstanceId', Value: remoteId},
+          ],
+        });
+        const listRes = await cloudwatchClient.send(listMetricsCommand);
+        if (listRes && listRes.Metrics && listRes.Metrics.length > 0) {
+          metricQueries.push({
+            Metric: {...listRes.Metrics[0]},
+            Period: period,
+            Stat: statistics,
+          });
+        }
+      }
+    }
+
+    const command = new GetMetricDataCommand({
+      StartTime: startTime,
+      EndTime: endTime,
+      MetricDataQueries: metricQueries.map((item, idx) => {
+        let id = '';
+        if (metricName === CloudwatchEC2MetricName.CPU_UTILIZATION) {
+          id = `cpu${idx}`;
+        } else if (metricName === CloudwatchEC2MetricName.DISK_USED_PERCENT) {
+          id = `disk${idx}`;
+        } else {
+          id = `mem${idx}`;
+        }
+        return {
+          Id: id,
+          MetricStat: item,
+          ReturnData: true,
+        };
+      }),
     });
 
     const metricData = await cloudwatchClient.send(command);

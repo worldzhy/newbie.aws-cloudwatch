@@ -5,13 +5,23 @@ import {
   IsUUID,
 } from 'class-validator';
 import {ApiProperty} from '@nestjs/swagger';
-import {CloudwatchMetricStatistics} from '../aws-cloudwatch.enum';
+import {
+  CloudwatchEC2MetricName,
+  CloudwatchMetricStatistics,
+} from '../aws-cloudwatch.enum';
 
-export class GetWatchedEC2InstancesCPUMetricDto {
+export class GetWatchedEC2InstancesMetricDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsUUID('4')
   awsAccountId: string;
+
+  @ApiProperty({
+    enum: CloudwatchEC2MetricName,
+  })
+  @IsNotEmpty()
+  @IsEnum(CloudwatchEC2MetricName)
+  metricName: CloudwatchEC2MetricName;
 
   @ApiProperty()
   @IsNotEmpty()
@@ -21,7 +31,10 @@ export class GetWatchedEC2InstancesCPUMetricDto {
   @IsNotEmpty()
   endTime: string;
 
-  @ApiProperty({description: 'The period must be a multiple of 60'})
+  @ApiProperty({
+    type: Number,
+    description: 'The period must be a multiple of 60',
+  })
   @IsNumberString()
   period: string;
 

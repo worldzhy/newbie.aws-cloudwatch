@@ -12,7 +12,7 @@ import {
 } from '../aws-cloudwatch.interface';
 import {AwsCloudwatchService} from '../aws-cloudwatch.service';
 import dayjs from 'dayjs';
-import {GetWatchedEC2InstancesCPUMetricDto} from '@microservices/aws-cloudwatch/ec2-instance/ec2-metric.dto';
+import {GetWatchedEC2InstancesMetricDto} from '@microservices/aws-cloudwatch/ec2-instance/ec2-metric.dto';
 
 @Injectable()
 export class Ec2MetricService {
@@ -28,8 +28,8 @@ export class Ec2MetricService {
     this.encryptIV = this.configService.get('microservices.cloudwatch.cryptoEncryptIV') as string;
   }
 
-  async getWatchedInstancesCPUMetric(data: GetWatchedEC2InstancesCPUMetricDto) {
-    const {awsAccountId, startTime, endTime, period, statistics} = data;
+  async getWatchedInstancesMetric(data: GetWatchedEC2InstancesMetricDto) {
+    const {awsAccountId, metricName, startTime, endTime, period, statistics} = data;
     const awsAccount = await this.prisma.awsAccount.findUniqueOrThrow({
       where: {id: awsAccountId},
       include: {ec2Instances: {where: {isWatching: true}, orderBy: {createdAt: 'asc'}}},
@@ -59,6 +59,7 @@ export class Ec2MetricService {
         ec2InstanceRemoteIds: awsAccount.ec2Instances
           .filter(item => item.region === region)
           .map(item => item.instanceId),
+        metricName,
         region: region.replaceAll('_', '-'),
         startTime: dayjs(startTime).toDate(),
         endTime: dayjs(endTime).toDate(),
@@ -68,7 +69,7 @@ export class Ec2MetricService {
         secretAccessKey: decryptString(awsAccount.secretAccessKey, this.encryptKey, this.encryptIV),
       };
 
-      const metricData = await this.cloudwatchService.getEC2InstancesCPUMetric(params);
+      const metricData = await this.cloudwatchService.getEC2InstancesMetric(params);
       results.push(...metricData);
     }
 
