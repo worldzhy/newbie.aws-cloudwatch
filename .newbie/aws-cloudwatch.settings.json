@@ -2,12 +2,26 @@
   "config-service": {
     "cloudwatch": {
       "cryptoEncryptKey": "process.env.AWS_CLOUDWATCH_CRYPTO_ENCRYPT_KEY",
-      "cryptoEncryptIV": "process.env.AWS_CLOUDWATCH_CRYPTO_ENCRYPT_IV"
+      "cryptoEncryptIV": "process.env.AWS_CLOUDWATCH_CRYPTO_ENCRYPT_IV",
+      "clickhouse": {
+        "host": "process.env.AWS_CLOUDWATCH_CLICKHOUSE_HOST",
+        "user": "process.env.AWS_CLOUDWATCH_CLICKHOUSE_USER",
+        "password": "process.env.AWS_CLOUDWATCH_CLICKHOUSE_PASSWORD",
+        "db": "process.env.AWS_CLOUDWATCH_CLICKHOUSE_DB"
+      },
+      "ai": {
+        "deepseekKey": "process.env.AWS_CLOUDWATCH_AI_DEEPSEEK_KEY"
+      }
     }
   },
   "env": {
     "AWS_CLOUDWATCH_CRYPTO_ENCRYPT_KEY": "",
-    "AWS_CLOUDWATCH_CRYPTO_ENCRYPT_IV": ""
+    "AWS_CLOUDWATCH_CRYPTO_ENCRYPT_IV": "",
+    "AWS_CLOUDWATCH_CLICKHOUSE_HOST": "night-watch-backend-clickhouse",
+    "AWS_CLOUDWATCH_CLICKHOUSE_USER": "",
+    "AWS_CLOUDWATCH_CLICKHOUSE_PASSWORD": "",
+    "AWS_CLOUDWATCH_CLICKHOUSE_DB": "",
+    "AWS_CLOUDWATCH_AI_DEEPSEEK_KEY": ""
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch": "latest",
