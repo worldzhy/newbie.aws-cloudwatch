@@ -3,6 +3,7 @@ import {CreateAWSAccountDto, UpdateAWSAccountDto} from '@microservices/aws-cloud
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {encryptString} from '@framework/utilities/crypto.util';
 import {ConfigService} from '@nestjs/config';
+import { AwsRegion } from '@generated/prisma/enums';
 
 @Controller('awsAccounts')
 export class AWSAccountController {
@@ -27,11 +28,12 @@ export class AWSAccountController {
 
   @Post()
   async createAWSAccount(@Body() body: CreateAWSAccountDto) {
-    const {secretAccessKey, ...rest} = body;
+    const {secretAccessKey, regions, ...rest} = body;
 
     const newAWSAccount = await this.prisma.awsAccount.create({
       data: {
         ...rest,
+        regions: regions as AwsRegion[],
         secretAccessKey: encryptString(secretAccessKey, this.encryptKey, this.encryptIV),
       },
     });
@@ -41,12 +43,13 @@ export class AWSAccountController {
 
   @Patch(':id')
   async updateAWSAccount(@Param('id') id: string, @Body() body: UpdateAWSAccountDto) {
-    const {secretAccessKey, ...rest} = body;
+    const {secretAccessKey, regions, ...rest} = body;
 
     const updatedAWSAccount = await this.prisma.awsAccount.update({
       where: {id},
       data: {
         ...rest,
+        regions: regions as AwsRegion[] | undefined,
         secretAccessKey: secretAccessKey ? encryptString(secretAccessKey, this.encryptKey, this.encryptIV) : undefined,
       },
     });
