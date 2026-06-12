@@ -51,7 +51,7 @@ export class AiAnalysisService {
     private readonly prisma: PrismaService,
     private readonly clickhouse: ClickHouseService,
   ) {
-    const apiKey = this.configService.get<string>('microservices.ai.deepseekKey');
+    const apiKey = this.configService.get<string>('microservices.cloudwatch.ai.deepseekKey');
     this.client = new OpenAI({
       apiKey: apiKey || '',
       baseURL: 'https://api.deepseek.com',
