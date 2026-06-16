@@ -51,7 +51,16 @@ export class AiAnalysisService {
     private readonly prisma: PrismaService,
     private readonly clickhouse: ClickHouseService,
   ) {
-    const apiKey = this.configService.get<string>('microservices.cloudwatch.ai.deepseekKey');
+    // Debug: trace the DeepSeek API key resolution
+    const rawEnv = process.env.AWS_CLOUDWATCH_AI_DEEPSEEK_KEY;
+    const fromConfig = this.configService.get<string>('microservices.cloudwatch.ai.deepseekKey');
+    const fromConfigWrong = this.configService.get<string>('microservices.ai.deepseekKey');
+    this.logger.log(`[DEBUG] raw env AWS_CLOUDWATCH_AI_DEEPSEEK_KEY = ${rawEnv ? `"${rawEnv.slice(0, 12)}..." (len=${rawEnv.length})` : 'UNDEFINED / EMPTY'}`);
+    this.logger.log(`[DEBUG] configService.get('microservices.cloudwatch.ai.deepseekKey') = ${fromConfig ? `"${fromConfig.slice(0, 12)}..." (len=${fromConfig.length})` : 'UNDEFINED / EMPTY'}`);
+    this.logger.log(`[DEBUG] configService.get('microservices.ai.deepseekKey') = ${fromConfigWrong ? `"${fromConfigWrong.slice(0, 12)}..." (len=${fromConfigWrong.length})` : 'UNDEFINED / EMPTY'}`);
+
+    const apiKey = fromConfig;
+    this.logger.log(`[DEBUG] final apiKey passed to OpenAI = ${apiKey ? `"${apiKey.slice(0, 12)}..." (len=${apiKey.length})` : 'UNDEFINED / EMPTY'}`);
     this.client = new OpenAI({
       apiKey: apiKey || '',
       baseURL: 'https://api.deepseek.com',
