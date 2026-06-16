@@ -59,6 +59,7 @@ export class AiAnalysisService {
     this.logger.log(`[DEBUG] configService.get('microservices.cloudwatch.ai.deepseekKey') = ${fromConfig ? `"${fromConfig.slice(0, 12)}..." (len=${fromConfig.length})` : 'UNDEFINED / EMPTY'}`);
     this.logger.log(`[DEBUG] configService.get('microservices.ai.deepseekKey') = ${fromConfigWrong ? `"${fromConfigWrong.slice(0, 12)}..." (len=${fromConfigWrong.length})` : 'UNDEFINED / EMPTY'}`);
 
+
     const apiKey = fromConfig;
     this.logger.log(`[DEBUG] final apiKey passed to OpenAI = ${apiKey ? `"${apiKey.slice(0, 12)}..." (len=${apiKey.length})` : 'UNDEFINED / EMPTY'}`);
     this.client = new OpenAI({
