@@ -1,12 +1,7 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
+import {BadRequestException, Injectable, Logger, UnauthorizedException} from '@nestjs/common';
 import {ConfigService} from '@nestjs/config';
 import {PrismaService} from '@framework/prisma/prisma.service';
-import {ClickHouseService} from '@framework/clickhouse/clickhouse.service';
+import {ClickhouseService} from '@microservices/clickhouse/clickhouse.service';
 import OpenAI from 'openai';
 import {AiAnalysisChatDto} from './ai-analysis.dto';
 
@@ -39,7 +34,8 @@ interface ExecutedQuerySummary {
 }
 
 /** Forbidden SQL keywords to prevent destructive operations. */
-const FORBIDDEN_KEYWORDS = /\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|GRANT|REVOKE|EXEC|EXECUTE|MERGE|CALL)\b/i;
+const FORBIDDEN_KEYWORDS =
+  /\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|GRANT|REVOKE|EXEC|EXECUTE|MERGE|CALL)\b/i;
 
 @Injectable()
 export class AiAnalysisService {
@@ -49,19 +45,26 @@ export class AiAnalysisService {
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
-    private readonly clickhouse: ClickHouseService,
+    private readonly clickhouse: ClickhouseService
   ) {
     // Debug: trace the DeepSeek API key resolution
     const rawEnv = process.env.AWS_CLOUDWATCH_AI_DEEPSEEK_KEY;
     const fromConfig = this.configService.get<string>('microservices.cloudwatch.ai.deepseekKey');
     const fromConfigWrong = this.configService.get<string>('microservices.ai.deepseekKey');
-    this.logger.log(`[DEBUG] raw env AWS_CLOUDWATCH_AI_DEEPSEEK_KEY = ${rawEnv ? `"${rawEnv.slice(0, 12)}..." (len=${rawEnv.length})` : 'UNDEFINED / EMPTY'}`);
-    this.logger.log(`[DEBUG] configService.get('microservices.cloudwatch.ai.deepseekKey') = ${fromConfig ? `"${fromConfig.slice(0, 12)}..." (len=${fromConfig.length})` : 'UNDEFINED / EMPTY'}`);
-    this.logger.log(`[DEBUG] configService.get('microservices.ai.deepseekKey') = ${fromConfigWrong ? `"${fromConfigWrong.slice(0, 12)}..." (len=${fromConfigWrong.length})` : 'UNDEFINED / EMPTY'}`);
-
+    this.logger.log(
+      `[DEBUG] raw env AWS_CLOUDWATCH_AI_DEEPSEEK_KEY = ${rawEnv ? `"${rawEnv.slice(0, 12)}..." (len=${rawEnv.length})` : 'UNDEFINED / EMPTY'}`
+    );
+    this.logger.log(
+      `[DEBUG] configService.get('microservices.cloudwatch.ai.deepseekKey') = ${fromConfig ? `"${fromConfig.slice(0, 12)}..." (len=${fromConfig.length})` : 'UNDEFINED / EMPTY'}`
+    );
+    this.logger.log(
+      `[DEBUG] configService.get('microservices.ai.deepseekKey') = ${fromConfigWrong ? `"${fromConfigWrong.slice(0, 12)}..." (len=${fromConfigWrong.length})` : 'UNDEFINED / EMPTY'}`
+    );
 
     const apiKey = fromConfig;
-    this.logger.log(`[DEBUG] final apiKey passed to OpenAI = ${apiKey ? `"${apiKey.slice(0, 12)}..." (len=${apiKey.length})` : 'UNDEFINED / EMPTY'}`);
+    this.logger.log(
+      `[DEBUG] final apiKey passed to OpenAI = ${apiKey ? `"${apiKey.slice(0, 12)}..." (len=${apiKey.length})` : 'UNDEFINED / EMPTY'}`
+    );
     this.client = new OpenAI({
       apiKey: apiKey || '',
       baseURL: 'https://api.deepseek.com',
@@ -269,10 +272,7 @@ Example 5 — Specific date filter (April 21):
    *    a second streaming DeepSeek call to generate a data-backed insight summary
    *    (the "post-query analysis" pass using real numbers from the database)
    */
-  async chatStream(
-    dto: AiAnalysisChatDto,
-    emit: (event: string, data: any) => void,
-  ): Promise<void> {
+  async chatStream(dto: AiAnalysisChatDto, emit: (event: string, data: any) => void): Promise<void> {
     // Step 1: Validate application ID
     await this.resolveApplication(dto.applicationId);
 
@@ -305,7 +305,7 @@ Example 5 — Specific date filter (April 21):
           temperature: 0.1,
           max_tokens: 4000,
         },
-        {timeout: 120000}, // 2 minute hard timeout passed as RequestOptions
+        {timeout: 120000} // 2 minute hard timeout passed as RequestOptions
       );
       fullContent = completion.choices[0]?.message?.content?.trim() ?? '';
     } catch (error) {
@@ -381,20 +381,20 @@ Example 5 — Specific date filter (April 21):
 
           // Emit a text notice instead of an empty chart when there's no data
           if (rows.length === 0) {
-            emit('text-token', {content: `No data found for "${block.chart.title}". There may be no records matching the query criteria for the selected time range.`});
+            emit('text-token', {
+              content: `No data found for "${block.chart.title}". There may be no records matching the query criteria for the selected time range.`,
+            });
             emit('text-done', {});
             continue;
           }
 
           const labels = rows.map(r => String(r[block.chart.labelField] ?? ''));
-          const datasets = (block.chart.dataFields || []).map(
-            (df: {field: string; label: string}, index: number) => ({
-              label: df.label,
-              data: rows.map(r => Number(r[df.field]) || 0),
-              backgroundColor: this.getChartColors(block.chart.chartType, rows.length, index),
-              borderColor: this.getChartBorderColor(index),
-            }),
-          );
+          const datasets = (block.chart.dataFields || []).map((df: {field: string; label: string}, index: number) => ({
+            label: df.label,
+            data: rows.map(r => Number(r[df.field]) || 0),
+            backgroundColor: this.getChartColors(block.chart.chartType, rows.length, index),
+            borderColor: this.getChartBorderColor(index),
+          }));
 
           emit('block', {
             type: 'chart',
@@ -550,7 +550,7 @@ P95 Response Time:
   private async generateAnalysisSummary(
     dto: AiAnalysisChatDto,
     summaries: ExecutedQuerySummary[],
-    emit: (event: string, data: any) => void,
+    emit: (event: string, data: any) => void
   ): Promise<void> {
     // Build a compact data-context string from all collected query summaries.
     // Each summary includes the query title, column names, and up to

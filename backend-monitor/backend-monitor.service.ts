@@ -1,9 +1,6 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import {Injectable, UnauthorizedException} from '@nestjs/common';
 import {PrismaService} from '@framework/prisma/prisma.service';
-import {ClickHouseService} from '@framework/clickhouse/clickhouse.service';
+import {ClickhouseService} from '@microservices/clickhouse/clickhouse.service';
 import {
   CreateBackendMonitorErrorReportDto,
   CreateBackendMonitorReportDto,
@@ -26,9 +23,8 @@ function toClickHouseDate(date: Date): string {
 export class BackendMonitorService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly clickhouse: ClickHouseService,
-  ) {
-  }
+    private readonly clickhouse: ClickhouseService
+  ) {}
 
   /**
    * Resolves an application by its report token.
@@ -127,10 +123,10 @@ export class BackendMonitorService {
     const offset = page * pageSize;
 
     // Build optional keyword WHERE clause.
-    const keywordClause = keyword ? `AND path ILIKE '%${keyword.replace(/'/g, '\'\'')}%'` : '';
+    const keywordClause = keyword ? `AND path ILIKE '%${keyword.replace(/'/g, "''")}%'` : '';
 
     // Filter by application_id (stable UUID, unaffected by token rotation).
-    const baseWhere = `WHERE application_id = '${applicationId.replace(/'/g, '\'\'')}' ${keywordClause}`;
+    const baseWhere = `WHERE application_id = '${applicationId.replace(/'/g, "''")}' ${keywordClause}`;
 
     // Query for total count.
     const countResult = await this.clickhouse.query({
@@ -181,11 +177,11 @@ export class BackendMonitorService {
     const offset = page * pageSize;
 
     const keywordClause = keyword
-      ? `AND (message ILIKE '%${keyword.replace(/'/g, '\'\'')}%' OR path ILIKE '%${keyword.replace(/'/g, '\'\'')}%')`
+      ? `AND (message ILIKE '%${keyword.replace(/'/g, "''")}%' OR path ILIKE '%${keyword.replace(/'/g, "''")}%')`
       : '';
 
     // Filter by application_id (stable UUID, unaffected by token rotation).
-    const baseWhere = `WHERE application_id = '${applicationId.replace(/'/g, '\'\'')}' ${keywordClause}`;
+    const baseWhere = `WHERE application_id = '${applicationId.replace(/'/g, "''")}' ${keywordClause}`;
 
     const countResult = await this.clickhouse.query({
       query: `SELECT count() AS total FROM application_error_logs ${baseWhere}`,

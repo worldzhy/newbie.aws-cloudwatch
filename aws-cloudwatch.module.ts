@@ -1,7 +1,5 @@
-import {
-  Global,
-  Module,
-} from '@nestjs/common';
+import {Global, Module} from '@nestjs/common';
+import {ClickhouseModule} from '@microservices/clickhouse/clickhouse.module';
 import {AwsCloudwatchService} from '@microservices/aws-cloudwatch/aws-cloudwatch.service';
 import {AWSAccountController} from '@microservices/aws-cloudwatch/aws-account/aws-account.controller';
 import {Ec2InstanceController} from './ec2-instance/ec2-instance.controller';
@@ -19,6 +17,7 @@ import {AiAnalysisService} from './ai-analysis/ai-analysis.service';
 
 @Global()
 @Module({
+  imports: [ClickhouseModule],
   controllers: [
     AWSAccountController,
     Ec2InstanceController,
@@ -28,8 +27,23 @@ import {AiAnalysisService} from './ai-analysis/ai-analysis.service';
     BackendMonitorController,
     AiAnalysisController,
   ],
-  providers: [AwsCloudwatchService, Ec2InstanceService, Ec2MetricService, RdsInstanceService, RdsMetricService, BackendMonitorService, AiAnalysisService],
-  exports: [AwsCloudwatchService, Ec2InstanceService, Ec2MetricService, RdsInstanceService, RdsMetricService, BackendMonitorService, AiAnalysisService],
+  providers: [
+    AwsCloudwatchService,
+    Ec2InstanceService,
+    Ec2MetricService,
+    RdsInstanceService,
+    RdsMetricService,
+    BackendMonitorService,
+    AiAnalysisService,
+  ],
+  exports: [
+    AwsCloudwatchService,
+    Ec2InstanceService,
+    Ec2MetricService,
+    RdsInstanceService,
+    RdsMetricService,
+    BackendMonitorService,
+    AiAnalysisService,
+  ],
 })
-export class AwsCloudwatchModule {
-}
+export class AwsCloudwatchModule {}
