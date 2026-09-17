@@ -40,7 +40,7 @@ export class AiAnalysisController {
    * analyze data belonging to their own applications.
    */
   @ApiOperation({summary: 'Chat with AI for data analysis (streaming SSE)'})
-  @ApiResponse({status: 200, description: 'SSE stream of AI analysis results.'})
+  @ApiResponse({status: 200, description: 'SSE stream of AI analysis results.', type: String})
   @ApiResponse({status: 401, description: 'Invalid application token or not authenticated.'})
   @HttpCode(HttpStatus.OK)
   @Post('chat')

@@ -1,21 +1,9 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Headers,
-  HttpCode,
-  HttpStatus,
-  Post,
-  Query,
-} from '@nestjs/common';
-import {
-  ApiHeader,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import {Body, Controller, Get, Headers, HttpCode, HttpStatus, Post, Query} from '@nestjs/common';
+import {ApiHeader, ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger';
 import {BackendMonitorService} from './backend-monitor.service';
 import {
+  BackendMonitorErrorLogListResponseDto,
+  BackendMonitorRequestLogListResponseDto,
   CreateBackendMonitorErrorReportDto,
   CreateBackendMonitorReportDto,
   ListBackendMonitorErrorLogsDto,
@@ -26,8 +14,7 @@ import {NoGuard} from '@microservices/account/security/passport/public/public.de
 @ApiTags('Backend Monitor')
 @Controller('backend-monitor')
 export class BackendMonitorController {
-  constructor(private readonly backendMonitorService: BackendMonitorService) {
-  }
+  constructor(private readonly backendMonitorService: BackendMonitorService) {}
 
   /**
    * Receives a single request-processing metric report from an application.
@@ -50,7 +37,7 @@ export class BackendMonitorController {
   @Post('report')
   async createReport(
     @Headers('x-application-token') reportToken: string,
-    @Body() body: CreateBackendMonitorReportDto,
+    @Body() body: CreateBackendMonitorReportDto
   ): Promise<void> {
     await this.backendMonitorService.createReport(reportToken, body);
   }
@@ -73,7 +60,7 @@ export class BackendMonitorController {
   @Post('report-error')
   async createErrorReport(
     @Headers('x-application-token') reportToken: string,
-    @Body() body: CreateBackendMonitorErrorReportDto,
+    @Body() body: CreateBackendMonitorErrorReportDto
   ): Promise<void> {
     await this.backendMonitorService.createErrorReport(reportToken, body);
   }
@@ -83,9 +70,13 @@ export class BackendMonitorController {
    * Supports keyword search on path and sorting on multiple fields.
    */
   @ApiOperation({summary: 'List backend request logs for an application'})
-  @ApiResponse({status: 200, description: 'Paginated list of request logs.'})
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated list of request logs.',
+    type: BackendMonitorRequestLogListResponseDto,
+  })
   @Get('request-logs')
-  async listRequestLogs(@Query() query: ListBackendMonitorRequestLogsDto) {
+  async listRequestLogs(@Query() query: ListBackendMonitorRequestLogsDto): Promise<{records: object[]; total: number}> {
     return await this.backendMonitorService.listRequestLogs(query);
   }
 
@@ -94,9 +85,9 @@ export class BackendMonitorController {
    * Supports keyword search on message/path and sorting on multiple fields.
    */
   @ApiOperation({summary: 'List backend error logs for an application'})
-  @ApiResponse({status: 200, description: 'Paginated list of error logs.'})
+  @ApiResponse({status: 200, description: 'Paginated list of error logs.', type: BackendMonitorErrorLogListResponseDto})
   @Get('error-logs')
-  async listErrorLogs(@Query() query: ListBackendMonitorErrorLogsDto) {
+  async listErrorLogs(@Query() query: ListBackendMonitorErrorLogsDto): Promise<{records: object[]; total: number}> {
     return await this.backendMonitorService.listErrorLogs(query);
   }
 }

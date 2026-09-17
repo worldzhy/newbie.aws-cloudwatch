@@ -1,17 +1,5 @@
-import {
-  ApiProperty,
-  ApiPropertyOptional,
-} from '@nestjs/swagger';
-import {
-  IsDateString,
-  IsInt,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Max,
-  Min,
-} from 'class-validator';
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger';
+import {IsDateString, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min} from 'class-validator';
 import {Type} from 'class-transformer';
 
 /**
@@ -261,4 +249,99 @@ export class ListBackendMonitorErrorLogsDto {
   @IsOptional()
   @IsString()
   sortOrder?: 'asc' | 'desc';
+}
+
+/**
+ * Response DTO for a single backend request log row (ClickHouse application_request_logs).
+ */
+export class BackendMonitorRequestLogResponseDto {
+  @ApiProperty({type: String, description: 'Application ID (UUID)'})
+  application_id: string;
+
+  @ApiProperty({type: String, description: 'The HTTP request path'})
+  path: string;
+
+  @ApiProperty({type: String, description: 'The HTTP method in upper-case'})
+  method: string;
+
+  @ApiProperty({type: Number, description: 'The HTTP response status code'})
+  status_code: number;
+
+  @ApiProperty({type: String, description: 'ISO 8601 timestamp of when the request arrived'})
+  request_at: string;
+
+  @ApiProperty({type: String, description: 'ISO 8601 timestamp of when the response was sent'})
+  response_at: string;
+
+  @ApiProperty({type: Number, description: 'Request duration in milliseconds'})
+  duration_ms: number;
+
+  @ApiPropertyOptional({type: String, description: 'Client IP address'})
+  ip?: string | null;
+
+  @ApiPropertyOptional({type: String, description: 'Raw User-Agent string'})
+  user_agent?: string | null;
+
+  @ApiProperty({type: String, description: 'ISO 8601 timestamp of when the row was ingested'})
+  created_at: string;
+}
+
+/**
+ * Response DTO for a single backend error log row (ClickHouse application_error_logs).
+ */
+export class BackendMonitorErrorLogResponseDto {
+  @ApiProperty({type: String, description: 'Application ID (UUID)'})
+  application_id: string;
+
+  @ApiProperty({type: String, description: 'Error type / category'})
+  type: string;
+
+  @ApiProperty({type: String, description: 'The error message string'})
+  message: string;
+
+  @ApiPropertyOptional({type: String, description: 'Full stack trace string'})
+  stack?: string | null;
+
+  @ApiPropertyOptional({type: String, description: 'HTTP request path where the error occurred'})
+  path?: string | null;
+
+  @ApiPropertyOptional({type: String, description: 'HTTP method in upper-case'})
+  method?: string | null;
+
+  @ApiPropertyOptional({type: Number, description: 'HTTP response status code, 0 if not applicable'})
+  status_code?: number | null;
+
+  @ApiPropertyOptional({type: String, description: 'Client IP address'})
+  ip?: string | null;
+
+  @ApiPropertyOptional({type: String, description: 'Raw User-Agent string'})
+  user_agent?: string | null;
+
+  @ApiProperty({type: String, description: 'ISO 8601 timestamp of when the error occurred'})
+  occurred_at: string;
+
+  @ApiProperty({type: String, description: 'ISO 8601 timestamp of when the row was ingested'})
+  created_at: string;
+}
+
+/**
+ * Paginated response for backend request logs.
+ */
+export class BackendMonitorRequestLogListResponseDto {
+  @ApiProperty({type: BackendMonitorRequestLogResponseDto, isArray: true})
+  records: BackendMonitorRequestLogResponseDto[];
+
+  @ApiProperty({type: Number, description: 'Total count of rows matching the query'})
+  total: number;
+}
+
+/**
+ * Paginated response for backend error logs.
+ */
+export class BackendMonitorErrorLogListResponseDto {
+  @ApiProperty({type: BackendMonitorErrorLogResponseDto, isArray: true})
+  records: BackendMonitorErrorLogResponseDto[];
+
+  @ApiProperty({type: Number, description: 'Total count of rows matching the query'})
+  total: number;
 }

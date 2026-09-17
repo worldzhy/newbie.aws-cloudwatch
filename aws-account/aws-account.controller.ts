@@ -1,10 +1,13 @@
 import {Body, Controller, Get, Param, Patch, Post} from '@nestjs/common';
-import {CreateAWSAccountDto, UpdateAWSAccountDto} from '@microservices/aws-cloudwatch/aws-account/aws-account.dto';
+import {ApiBearerAuth, ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger';
+import {AwsAccountResponseDto, CreateAWSAccountDto, UpdateAWSAccountDto} from '@microservices/aws-cloudwatch/aws-account/aws-account.dto';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {encryptString} from '@framework/utilities/crypto.util';
 import {ConfigService} from '@nestjs/config';
-import { AwsRegion } from '@generated/prisma/enums';
+import {AwsRegion} from '@generated/prisma/enums';
 
+@ApiTags('AWS CloudWatch / Account')
+@ApiBearerAuth()
 @Controller('awsAccounts')
 export class AWSAccountController {
   private readonly encryptKey: string;
@@ -19,14 +22,20 @@ export class AWSAccountController {
   }
 
   @Get(':id')
+  @ApiOperation({summary: 'Get an AWS account by id'})
+  @ApiResponse({type: AwsAccountResponseDto})
   async getAWSAccount(@Param('id') id: string) {
     const awsAccount = await this.prisma.awsAccount.findUniqueOrThrow({
       where: {id},
     });
-    return awsAccount;
+    // Strip the encrypted secret access key from the response.
+    const {secretAccessKey, ...rest} = awsAccount;
+    return rest;
   }
 
   @Post()
+  @ApiOperation({summary: 'Create an AWS account'})
+  @ApiResponse({type: AwsAccountResponseDto})
   async createAWSAccount(@Body() body: CreateAWSAccountDto) {
     const {secretAccessKey, regions, ...rest} = body;
 
@@ -38,10 +47,14 @@ export class AWSAccountController {
       },
     });
 
-    return newAWSAccount;
+    // Strip the encrypted secret access key from the response.
+    const {secretAccessKey: _secret, ...result} = newAWSAccount;
+    return result;
   }
 
   @Patch(':id')
+  @ApiOperation({summary: 'Update an AWS account'})
+  @ApiResponse({type: AwsAccountResponseDto})
   async updateAWSAccount(@Param('id') id: string, @Body() body: UpdateAWSAccountDto) {
     const {secretAccessKey, regions, ...rest} = body;
 
@@ -54,6 +67,8 @@ export class AWSAccountController {
       },
     });
 
-    return updatedAWSAccount;
+    // Strip the encrypted secret access key from the response.
+    const {secretAccessKey: _secret, ...result} = updatedAWSAccount;
+    return result;
   }
 }

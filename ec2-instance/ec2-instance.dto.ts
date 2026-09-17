@@ -13,6 +13,39 @@ import {
 } from '@nestjs/swagger';
 import {Transform} from 'class-transformer';
 import {BooleanTransformer} from '@framework/transformers/boolean.transformer';
+import {AWSRegion} from '@microservices/aws-cloudwatch/aws-cloudwatch.enum';
+
+/**
+ * Response DTO for an EC2 instance record.
+ */
+export class Ec2InstanceResponseDto {
+  @ApiProperty({type: String})
+  id: string;
+
+  @ApiProperty({type: String})
+  instanceId: string;
+
+  @ApiProperty({type: String})
+  name: string;
+
+  @ApiPropertyOptional({type: String})
+  status?: string | null;
+
+  @ApiProperty({enum: AWSRegion})
+  region: AWSRegion;
+
+  @ApiProperty({type: Boolean})
+  isWatching: boolean;
+
+  @ApiProperty({type: Date})
+  createdAt: Date;
+
+  @ApiProperty({type: Date})
+  updatedAt: Date;
+
+  @ApiProperty({type: String})
+  awsAccountId: string;
+}
 
 export class ListEC2InstancesDto {
   @ApiProperty()
