@@ -1,15 +1,8 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
+import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {ConfigService} from '@nestjs/config';
 import {decryptString} from '@framework/utilities/crypto.util';
-import {
-  GetEC2InstancesCPUMetricParams,
-  MetricData,
-} from '../aws-cloudwatch.interface';
+import {GetEC2InstancesCPUMetricParams, MetricData} from '../aws-cloudwatch.interface';
 import {AwsCloudwatchService} from '../aws-cloudwatch.service';
 import dayjs from 'dayjs';
 import {GetWatchedEC2InstancesMetricDto} from '@microservices/aws-cloudwatch/ec2-instance/ec2-metric.dto';
@@ -22,7 +15,7 @@ export class Ec2MetricService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
-    private readonly cloudwatchService: AwsCloudwatchService,
+    private readonly cloudwatchService: AwsCloudwatchService
   ) {
     this.encryptKey = this.configService.get('microservices.cloudwatch.cryptoEncryptKey') as string;
     this.encryptIV = this.configService.get('microservices.cloudwatch.cryptoEncryptIV') as string;

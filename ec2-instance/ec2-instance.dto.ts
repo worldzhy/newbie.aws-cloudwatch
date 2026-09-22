@@ -1,16 +1,5 @@
-import {
-  ArrayMinSize,
-  IsArray,
-  IsBoolean,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsUUID,
-} from 'class-validator';
-import {
-  ApiProperty,
-  ApiPropertyOptional,
-} from '@nestjs/swagger';
+import {ArrayMinSize, IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID} from 'class-validator';
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger';
 import {Transform} from 'class-transformer';
 import {BooleanTransformer} from '@framework/transformers/boolean.transformer';
 import {AWSRegion} from '@microservices/aws-cloudwatch/aws-cloudwatch.enum';

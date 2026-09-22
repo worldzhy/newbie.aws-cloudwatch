@@ -1,16 +1,9 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
+import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {ConfigService} from '@nestjs/config';
 import {decryptString} from '@framework/utilities/crypto.util';
 import {GetWatchedRDSInstancesMetricDto} from './rds-instance.dto';
-import {
-  GetRDSInstancesMetricParams,
-  MetricData,
-} from '../aws-cloudwatch.interface';
+import {GetRDSInstancesMetricParams, MetricData} from '../aws-cloudwatch.interface';
 import {AwsCloudwatchService} from '../aws-cloudwatch.service';
 import dayjs from 'dayjs';
 
@@ -22,7 +15,7 @@ export class RdsMetricService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
-    private readonly cloudwatchService: AwsCloudwatchService,
+    private readonly cloudwatchService: AwsCloudwatchService
   ) {
     this.encryptKey = this.configService.get('microservices.cloudwatch.cryptoEncryptKey') as string;
     this.encryptIV = this.configService.get('microservices.cloudwatch.cryptoEncryptIV') as string;

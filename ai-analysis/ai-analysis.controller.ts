@@ -1,16 +1,5 @@
-import {
-  Body,
-  Controller,
-  HttpCode,
-  HttpStatus,
-  Post,
-  Res,
-} from '@nestjs/common';
-import {
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import {Body, Controller, HttpCode, HttpStatus, Post, Res} from '@nestjs/common';
+import {ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger';
 import {Response} from 'express';
 import {AiAnalysisService} from './ai-analysis.service';
 import {AiAnalysisChatDto} from './ai-analysis.dto';
@@ -18,8 +7,7 @@ import {AiAnalysisChatDto} from './ai-analysis.dto';
 @ApiTags('AI Analysis')
 @Controller('ai-analysis')
 export class AiAnalysisController {
-  constructor(private readonly aiAnalysisService: AiAnalysisService) {
-  }
+  constructor(private readonly aiAnalysisService: AiAnalysisService) {}
 
   /**
    * Accepts a user message and streams back AI analysis results via SSE.
@@ -62,7 +50,9 @@ export class AiAnalysisController {
         }
       });
     } catch (error) {
-      res.write(`event: error\ndata: ${JSON.stringify({message: error instanceof Error ? error.message : 'Unknown error'})}\n\n`);
+      res.write(
+        `event: error\ndata: ${JSON.stringify({message: error instanceof Error ? error.message : 'Unknown error'})}\n\n`
+      );
     }
 
     // Signal stream end

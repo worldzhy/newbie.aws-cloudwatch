@@ -9,14 +9,8 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import {
-  ApiProperty,
-  ApiPropertyOptional,
-} from '@nestjs/swagger';
-import {
-  CloudwatchMetricRDSMetricName,
-  CloudwatchMetricStatistics,
-} from '../aws-cloudwatch.enum';
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger';
+import {CloudwatchMetricRDSMetricName, CloudwatchMetricStatistics} from '../aws-cloudwatch.enum';
 import {Transform} from 'class-transformer';
 import {BooleanTransformer} from '@framework/transformers/boolean.transformer';
 import {AWSRegion} from '@microservices/aws-cloudwatch/aws-cloudwatch.enum';

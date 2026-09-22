@@ -2,7 +2,12 @@ import {Body, Controller, Get, Param, Patch, Query} from '@nestjs/common';
 import {ApiBearerAuth, ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {RdsInstanceService} from './rds-instance.service';
-import {FetchRDSInstancesDto, ListRDSInstancesDto, RdsInstanceResponseDto, SyncRDSInstancesWatchDto} from './rds-instance.dto';
+import {
+  FetchRDSInstancesDto,
+  ListRDSInstancesDto,
+  RdsInstanceResponseDto,
+  SyncRDSInstancesWatchDto,
+} from './rds-instance.dto';
 
 @ApiTags('AWS CloudWatch / RDS Instance')
 @ApiBearerAuth()

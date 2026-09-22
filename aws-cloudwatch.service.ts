@@ -5,17 +5,12 @@ import {
   GetMetricDataCommandOutput,
   ListMetricsCommand,
 } from '@aws-sdk/client-cloudwatch';
-import {
-  GetEC2InstancesCPUMetricParams,
-  GetRDSInstancesMetricParams,
-  MetricData,
-} from './aws-cloudwatch.interface';
+import {GetEC2InstancesCPUMetricParams, GetRDSInstancesMetricParams, MetricData} from './aws-cloudwatch.interface';
 import {CloudwatchEC2MetricName} from '@microservices/aws-cloudwatch/aws-cloudwatch.enum';
 
 @Injectable()
 export class AwsCloudwatchService {
-  constructor() {
-  }
+  constructor() {}
 
   private initCloudwatchClient(args: {accessKeyId?: string; secretAccessKey?: string; region: string}) {
     const {accessKeyId, secretAccessKey, region} = args;
@@ -30,7 +25,15 @@ export class AwsCloudwatchService {
 
   async getEC2InstancesMetric(params: GetEC2InstancesCPUMetricParams) {
     const {
-      ec2InstanceRemoteIds, metricName, accessKeyId, secretAccessKey, region, startTime, endTime, period, statistics,
+      ec2InstanceRemoteIds,
+      metricName,
+      accessKeyId,
+      secretAccessKey,
+      region,
+      startTime,
+      endTime,
+      period,
+      statistics,
     } = params;
     const cloudwatchClient = this.initCloudwatchClient({accessKeyId, secretAccessKey, region});
     if (ec2InstanceRemoteIds.length === 0) {
@@ -45,9 +48,7 @@ export class AwsCloudwatchService {
           Metric: {
             Namespace: 'AWS/EC2',
             MetricName: metricName,
-            Dimensions: [
-              {Name: 'InstanceId', Value: remoteId},
-            ],
+            Dimensions: [{Name: 'InstanceId', Value: remoteId}],
           },
           Period: period,
           Stat: statistics,
@@ -83,9 +84,7 @@ export class AwsCloudwatchService {
         const listMetricsCommand = new ListMetricsCommand({
           Namespace: 'CWAgent',
           MetricName: metricName,
-          Dimensions: [
-            {Name: 'InstanceId', Value: remoteId},
-          ],
+          Dimensions: [{Name: 'InstanceId', Value: remoteId}],
         });
         const listRes = await cloudwatchClient.send(listMetricsCommand);
         if (listRes && listRes.Metrics && listRes.Metrics.length > 0) {
@@ -172,7 +171,7 @@ export class AwsCloudwatchService {
             ...result.Timestamps.map((t, i) => ({
               timestamp: new Date(t),
               value: result.Values![i],
-            })),
+            }))
           );
           dataPoints.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
         }

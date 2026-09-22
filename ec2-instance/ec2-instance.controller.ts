@@ -2,7 +2,12 @@ import {Body, Controller, Get, Param, Patch, Query} from '@nestjs/common';
 import {ApiBearerAuth, ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {Ec2InstanceService} from './ec2-instance.service';
-import {Ec2InstanceResponseDto, FetchEC2InstancesDto, ListEC2InstancesDto, SyncEC2InstancesWatchDto} from './ec2-instance.dto';
+import {
+  Ec2InstanceResponseDto,
+  FetchEC2InstancesDto,
+  ListEC2InstancesDto,
+  SyncEC2InstancesWatchDto,
+} from './ec2-instance.dto';
 
 @ApiTags('AWS CloudWatch / EC2 Instance')
 @ApiBearerAuth()

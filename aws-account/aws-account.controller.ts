@@ -1,6 +1,10 @@
 import {Body, Controller, Get, Param, Patch, Post} from '@nestjs/common';
 import {ApiBearerAuth, ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger';
-import {AwsAccountResponseDto, CreateAWSAccountDto, UpdateAWSAccountDto} from '@microservices/aws-cloudwatch/aws-account/aws-account.dto';
+import {
+  AwsAccountResponseDto,
+  CreateAWSAccountDto,
+  UpdateAWSAccountDto,
+} from '@microservices/aws-cloudwatch/aws-account/aws-account.dto';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {encryptString} from '@framework/utilities/crypto.util';
 import {ConfigService} from '@nestjs/config';

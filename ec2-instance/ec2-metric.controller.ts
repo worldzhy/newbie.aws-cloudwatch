@@ -1,8 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-} from '@nestjs/common';
+import {Controller, Get, Query} from '@nestjs/common';
 import {ApiBearerAuth, ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger';
 import {Ec2MetricService} from './ec2-metric.service';
 import {GetWatchedEC2InstancesMetricDto} from './ec2-metric.dto';
@@ -11,8 +7,7 @@ import {GetWatchedEC2InstancesMetricDto} from './ec2-metric.dto';
 @ApiBearerAuth()
 @Controller('ec2-metric')
 export class Ec2MetricController {
-  constructor(private readonly ec2MetricService: Ec2MetricService) {
-  }
+  constructor(private readonly ec2MetricService: Ec2MetricService) {}
 
   @Get()
   @ApiOperation({summary: 'Get CloudWatch metrics for watched EC2 instances'})
